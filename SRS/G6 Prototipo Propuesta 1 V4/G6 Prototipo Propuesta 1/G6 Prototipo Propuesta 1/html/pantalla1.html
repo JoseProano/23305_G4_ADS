@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Sistema</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        .navbar {
+            background-color: #7b4e9b;
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 20px;
+        }
+        .navbar-brand, .nav-link {
+            font-size: 20px;
+            color: #fff;
+        }
+        .container-fluid {
+            display: flex;
+            min-height: 100vh;
+            padding: 0;
+        }
+        .sidebar {
+            background-color: #7b4e9b;
+            width: 250px;
+            padding: 20px;
+            border-right: 2px solid #ddd;
+        }
+        .sidebar .btn {
+            width: 100%;
+            margin-bottom: 10px;
+            background-color: #9b6fb0;
+            color: white;
+            font-size: 18px;
+            border: none;
+        }
+        .sidebar .btn:hover {
+            background-color: #7b4e9b;
+        }
+        .main-content {
+            flex-grow: 1;
+            background-image: url('tu-imagen.jpg');
+            background-size: cover;
+            padding: 20px;
+        }
+        .btn-salir {
+            background-color: #5A8FDF;
+            color: white;
+            font-size: 18px;
+            border: none;
+        }
+        .btn-salir:hover {
+            background-color: #4C8FD4;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div></div>
+        <button class="btn btn-salir" onclick="window.location.href='../index.html'">Salir</button>
+    </nav>
+
+    <!-- Main content -->
+    <div class="container-fluid">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <button class="btn" onclick="window.location.href='crianza.html'">Gestionar Crianza</button>
+            <button class="btn" onclick="window.location.href='generar.html'">Generar Reportes</button>
+        </div>
+
+        <!-- Main Area -->
+        <div class="main-content">
+            <h1>Bienvenido</h1>
+            <p>Aquí puedes gestionar crianza, generar reportes y auditar procesos.</p>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

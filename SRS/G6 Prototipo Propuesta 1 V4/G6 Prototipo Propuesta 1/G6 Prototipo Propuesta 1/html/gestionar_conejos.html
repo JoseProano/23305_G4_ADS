@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestionar Conejos</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        .navbar {
+            background-color: #7b4e9b;
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 20px;
+        }
+        .navbar-brand, .nav-link {
+            font-size: 20px;
+            color: #fff;
+        }
+        .container-fluid {
+            display: flex;
+            min-height: 100vh;
+            padding: 0;
+        }
+        .sidebar {
+            background-color: #7b4e9b;
+            width: 250px;
+            padding: 20px;
+            border-right: 2px solid #ddd;
+        }
+        .sidebar .btn {
+            width: 100%;
+            margin-bottom: 10px;
+            background-color: #9b6fb0;
+            color: white;
+            font-size: 18px;
+            border: none;
+        }
+        .sidebar .btn:hover {
+            background-color: #7b4e9b;
+        }
+        .main-content {
+            flex-grow: 1;
+            padding: 20px;
+        }
+        .error {
+            color: red;
+            font-size: 14px;
+        }
+        #formConejo {
+            display: none;
+        }
+        .search-table {
+            margin-top: 20px;
+        }
+        .search-error {
+            color: red;
+            margin-top: 10px;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgb(0,0,0);
+            background-color: rgba(0,0,0,0.4);
+            padding-top: 60px;
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 50%;
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .help-text {
+            font-size: 12px;
+            color: #666;
+        }
+        .active {
+            background-color: rgba(0, 123, 255, 0.1) !important; /* Transparent blue */
+            border-color: rgba(0, 123, 255, 0.1) !important; /* Transparent blue */
+            color: black !important; /* Ensure text color remains black */
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div></div>
+    </nav>
+    <div class="container-fluid">
+        <div class="sidebar">
+            <button class="btn" onclick="mostrarFormulario('registrar')">Registrar Conejo</button>
+            <button class="btn" onclick="mostrarFormulario('editar')">Editar Conejo</button>
+            <button class="btn" onclick="mostrarFormulario('eliminar')">Eliminar Conejo</button>
+            <button class="btn btn-regresar" onclick="window.location.href='crianza.html'">← Regresar</button>
+        </div>
+        <div class="main-content">
+            
+            <!-- Formulario de Registrar/Editar Conejo -->
+            <form id="formConejo">
+                <h1 id="tituloFormulario">Registrar Conejo</h1>
+                <div class="form-group">
+                    <label for="raza">Raza</label>
+                    <select id="raza" class="form-control" required>
+                        <option value="">Seleccione...</option>
+                        <option value="rex">Rex</option>
+                        <option value="danes">Danés</option>
+                        <option value="leon">León</option>
+                    </select>
+                    <small class="error" id="errorRaza"></small>
+                </div>
+                <div class="form-group">
+                    <label for="codigo">Código</label>
+                    <input type="text" id="codigo" class="form-control" required>
+                    <small class="help-text">El código debe comenzar con la primera letra de la raza y una numeración secuencial de 3 dígitos (Ej: R001).</small>
+                    <small class="error" id="errorCodigo"></small>
+                </div>
+                <div class="form-group">
+                    <label for="sexo">Sexo</label>
+                    <select id="sexo" class="form-control" required>
+                        <option value="">Seleccione...</option>
+                        <option value="macho">Macho</option>
+                        <option value="hembra">Hembra</option>
+                    </select>
+                    <small class="error" id="errorSexo"></small>
+                </div>
+                <div class="form-group">
+                    <label for="edad">Edad (meses)</label>
+                    <input type="number" id="edad" class="form-control" required>
+                    <small class="error" id="errorEdad"></small>
+                </div>
+                <div class="form-group">
+                    <label for="peso">Peso (kg)</label>
+                    <input type="number" step="0.01" id="peso" class="form-control" required>
+                    <small class="error" id="errorPeso"></small>
+                </div>
+                <div class="form-group">
+                    <label for="proposito">Propósito</label>
+                    <select id="proposito" class="form-control" required>
+                        <option value="">Seleccione...</option>
+                        <option value="reproduccion">Reproducción</option>
+                        <option value="engorde">Engorde</option>
+                    </select>
+                    <small class="error" id="errorProposito"></small>
+                </div>
+                <button type="submit" class="btn btn-primary" id="btnSubmit">Registrar</button>
+            </form>
+            
+            <!-- Formulario de Edición -->
+            <div id="editarConejo" style="display: none;">
+                <h1>Editar Conejo</h1>
+                <!-- Campo de Búsqueda -->
+                <div class="form-group">
+                    <label for="buscarTipo">Buscar por</label>
+                    <select id="buscarTipo" class="form-control" onchange="cambiarTipoBusqueda()">
+                        <option value="codigo">Código</option>
+                        <option value="raza">Raza</option>
+                    </select>
+                </div>
+                <div class="form-group" id="buscarCodigoDiv">
+                    <label for="buscarCodigo">Buscar por Código</label>
+                    <input type="text" id="buscarCodigo" class="form-control" oninput="buscarConejo('editar')" placeholder="Ingrese código del conejo">
+                    <small id="errorBusqueda" class="search-error"></small>
+                </div>
+                <div class="form-group" id="buscarRazaDiv" style="display: none;">
+                    <label for="buscarRaza">Buscar por Raza</label>
+                    <input type="text" id="buscarRaza" class="form-control" oninput="buscarConejo('editar')" placeholder="Ingrese raza del conejo">
+                    <small id="errorBusquedaRaza" class="search-error"></small>
+                </div>
+                <!-- Tabla de Resultados de Búsqueda -->
+                <table class="table table-striped search-table" id="tablaResultados" style="display: none;">
+                    <thead>
+                        <tr>                    
+                            <th>Código</th>
+                            <th>Sexo</th>
+                            <th>Edad (meses)</th>
+                            <th>Peso (kg)</th>
+                            <th>Propósito</th>
+                            <th>Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="resultados"></tbody>
+                </table>
+            </div>
+
+            <div id="mensajeExito" class="alert alert-success mt-3" style="display:none;"></div>
+        </div>
+    </div>
+
+    <div id="deleteModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <p>¿Está seguro de que desea eliminar este conejo?</p>
+            <button id="confirmDelete" class="btn btn-danger">Eliminar</button>
+            <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+        </div>
+    </div>
+
+    <script>
+        let conejos = [
+            { raza: "rex", codigo: "R001", sexo: "macho", edad: 6, peso: 2.5, proposito: "engorde" },
+            { raza: "danes", codigo: "D002", sexo: "hembra", edad: 8, peso: 3.0, proposito: "reproduccion" },
+            { raza: "leon", codigo: "L003", sexo: "macho", edad: 4, peso: 1.8, proposito: "engorde" }
+        ];
+
+        function mostrarFormulario(accion) {
+            let form = document.getElementById("formConejo");
+            let titulo = document.getElementById("tituloFormulario");
+            let btnSubmit = document.getElementById("btnSubmit");
+            let mensajeExito = document.getElementById("mensajeExito");
+            let editarConejo = document.getElementById("editarConejo");
+
+            // Reiniciar mensajes y errores
+            mensajeExito.style.display = "none";
+            document.getElementById("errorRaza").textContent = "";
+            document.getElementById("errorCodigo").textContent = "";
+            document.getElementById("errorSexo").textContent = "";
+            document.getElementById("errorEdad").textContent = "";
+            document.getElementById("errorPeso").textContent = "";
+            document.getElementById("errorProposito").textContent = "";
+            document.getElementById("errorBusqueda").textContent = "";
+
+            if (accion === "registrar") {
+                titulo.textContent = "Registrar Conejo";
+                btnSubmit.textContent = "Registrar";
+                form.style.display = "block";
+                editarConejo.style.display = "none";
+                form.reset();
+            } else if (accion === "editar") {
+                titulo.textContent = "Editar Conejo";
+                btnSubmit.textContent = "Guardar Cambios";
+                form.style.display = "none";
+                editarConejo.style.display = "block";
+                mostrarTablaConejos('editar');
+            } else if (accion === "eliminar") {
+                titulo.textContent = "Eliminar Conejo";
+                btnSubmit.style.display = "none";
+                form.style.display = "none";
+                editarConejo.style.display = "block";
+                mostrarTablaConejos('eliminar');
+            } else {
+                form.style.display = "none";
+            }
+        }
+
+        function mostrarTablaConejos(accion) {
+            let resultados = document.getElementById("resultados");
+            let tablaResultados = document.getElementById("tablaResultados");
+            resultados.innerHTML = ""; // Limpiar resultados
+
+            conejos.forEach(conejo => {
+                let row = `<tr>
+                            
+                            <td>${conejo.codigo}</td>
+                            <td>${conejo.sexo}</td>
+                            <td>${conejo.edad}</td>
+                            <td>${conejo.peso}</td>
+                            <td>${conejo.proposito}</td>
+                            <td>
+                                ${accion === 'editar' ? `<button class="btn btn-warning" onclick="editarConejoSeleccionado('${conejo.codigo}')">Editar</button>` : ''}
+                                ${accion === 'eliminar' ? `<button class="btn btn-danger" onclick="eliminarConejo('${conejo.codigo}')">Eliminar</button>` : ''}
+                            </td>
+                        </tr>`;
+                resultados.innerHTML += row;
+            });
+            tablaResultados.style.display = "table";
+        }
+
+        function editarConejoSeleccionado(codigo) {
+            let conejoSeleccionado = conejos.find(conejo => conejo.codigo === codigo);
+            if (conejoSeleccionado) {
+                document.getElementById("raza").value = conejoSeleccionado.raza;
+                document.getElementById("codigo").value = conejoSeleccionado.codigo;
+                document.getElementById("sexo").value = conejoSeleccionado.sexo;
+                document.getElementById("edad").value = conejoSeleccionado.edad;
+                document.getElementById("peso").value = conejoSeleccionado.peso;
+                document.getElementById("proposito").value = conejoSeleccionado.proposito;
+                document.getElementById("tituloFormulario").textContent = "Editar Conejo";
+                document.getElementById("btnSubmit").textContent = "Guardar Cambios";
+                document.getElementById("formConejo").style.display = "block";
+                document.getElementById("editarConejo").style.display = "none";
+            }
+        }
+
+        let conejoAEliminar = null;
+
+        function eliminarConejo(codigo) {
+            conejoAEliminar = codigo;
+            document.getElementById("deleteModal").style.display = "block";
+        }
+
+        document.getElementById("confirmDelete").addEventListener("click", function() {
+            if (conejoAEliminar !== null) {
+                conejos = conejos.filter(conejo => conejo.codigo !== conejoAEliminar);
+                document.getElementById("mensajeExito").textContent = "Conejo eliminado con éxito.";
+                document.getElementById("mensajeExito").style.display = "block";
+                mostrarTablaConejos('eliminar');
+                closeModal();
+            }
+        });
+
+        function closeModal() {
+            document.getElementById("deleteModal").style.display = "none";
+            conejoAEliminar = null;
+        }
+
+        function cambiarTipoBusqueda() {
+            let tipoBusqueda = document.getElementById("buscarTipo").value;
+            if (tipoBusqueda === "codigo") {
+                document.getElementById("buscarCodigoDiv").style.display = "block";
+                document.getElementById("buscarRazaDiv").style.display = "none";
+            } else {
+                document.getElementById("buscarCodigoDiv").style.display = "none";
+                document.getElementById("buscarRazaDiv").style.display = "block";
+            }
+        }
+
+        function buscarConejo(accion) {
+            let tipoBusqueda = document.getElementById("buscarTipo").value;
+            let errorBusqueda = document.getElementById("errorBusqueda");
+            let errorBusquedaRaza = document.getElementById("errorBusquedaRaza");
+            let resultados = document.getElementById("resultados");
+            let tablaResultados = document.getElementById("tablaResultados");
+
+            // Limpiar resultados previos
+            resultados.innerHTML = "";
+            tablaResultados.style.display = "none";
+            errorBusqueda.textContent = "";
+            errorBusquedaRaza.textContent = "";
+
+            if (tipoBusqueda === "codigo") {
+                let codigo = document.getElementById("buscarCodigo").value;
+                if (codigo === "") {
+                    errorBusqueda.textContent = "";
+                    mostrarTablaConejos(accion);
+                    return;
+                }
+
+                let regex = /^[RDL]\d{3}$/;
+                if (!regex.test(codigo)) {
+                    errorBusqueda.textContent = "El formato del código es incorrecto. Debe ser la primera letra de la raza seleccionada y una numeración secuencial de 3 dígitos.";
+                    return;
+                }
+
+                let conejoEncontrado = conejos.filter(conejo => conejo.codigo === codigo);
+
+                if (conejoEncontrado.length === 0) {
+                    errorBusqueda.textContent = "No se encontró ningún conejo con ese código.";
+                    return;
+                }
+
+                conejoEncontrado.forEach(conejo => {
+                    let row = `<tr>
+                                
+                                <td>${conejo.codigo}</td>
+                                <td>${conejo.sexo}</td>
+                                <td>${conejo.edad}</td>
+                                <td>${conejo.peso}</td>
+                                <td>${conejo.proposito}</td>
+                                <td>
+                                    ${accion === 'editar' ? `<button class="btn btn-warning" onclick="editarConejoSeleccionado('${conejo.codigo}')">Editar</button>` : ''}
+                                    ${accion === 'eliminar' ? `<button class="btn btn-danger" onclick="eliminarConejo('${conejo.codigo}')">Eliminar</button>` : ''}
+                                </td>
+                            </tr>`;
+                    resultados.innerHTML += row;
+                });
+            } else {
+                let raza = document.getElementById("buscarRaza").value;
+                if (raza === "") {
+                    errorBusquedaRaza.textContent = "";
+                    mostrarTablaConejos(accion);
+                    return;
+                }
+
+                let regex = /^[a-zA-Z]+$/;
+                if (!regex.test(raza)) {
+                    errorBusquedaRaza.textContent = "El nombre de la raza solo debe contener letras.";
+                    return;
+                }
+
+                let conejoEncontrado = conejos.filter(conejo => conejo.raza.toLowerCase() === raza.toLowerCase());
+
+                if (conejoEncontrado.length === 0) {
+                    errorBusquedaRaza.textContent = "No se encontró ningún conejo con esa raza.";
+                    return;
+                }
+
+                conejoEncontrado.forEach(conejo => {
+                    let row = `<tr>
+                                
+                                <td>${conejo.codigo}</td>
+                                <td>${conejo.sexo}</td>
+                                <td>${conejo.edad}</td>
+                                <td>${conejo.peso}</td>
+                                <td>${conejo.proposito}</td>
+                                <td>
+                                    ${accion === 'editar' ? `<button class="btn btn-warning" onclick="editarConejoSeleccionado('${conejo.codigo}')">Editar</button>` : ''}
+                                    ${accion === 'eliminar' ? `<button class="btn btn-danger" onclick="eliminarConejo('${conejo.codigo}')">Eliminar</button>` : ''}
+                                </td>
+                            </tr>`;
+                    resultados.innerHTML += row;
+                });
+            }
+            tablaResultados.style.display = "table";
+        }
+
+        document.getElementById("formConejo").addEventListener("submit", function(event) {
+            event.preventDefault();
+            let raza = document.getElementById("raza").value;
+            let codigo = document.getElementById("codigo").value;
+            let sexo = document.getElementById("sexo").value;
+            let edad = document.getElementById("edad").value;
+            let peso = document.getElementById("peso").value;
+            let proposito = document.getElementById("proposito").value;
+            let mensajeExito = document.getElementById("mensajeExito");
+
+            // Validar
+            if (!raza || !codigo || !sexo || !edad || !peso || !proposito) {
+                return;
+            }
+
+            let regexCodigo = new RegExp(`^${raza.charAt(0).toUpperCase()}\\d{3}$`);
+            if (!regexCodigo.test(codigo)) {
+                document.getElementById("errorCodigo").textContent = "El formato del código es incorrecto. Debe ser la primera letra de la raza y una numeración secuencial de 3 dígitos.";
+                return;
+            }
+
+            if (!["macho", "hembra"].includes(sexo)) {
+                document.getElementById("errorSexo").textContent = "El sexo debe ser 'macho' o 'hembra'.";
+                return;
+            }
+
+            if (isNaN(edad) || edad <= 0 || edad > 12) {
+                document.getElementById("errorEdad").textContent = "La edad debe ser un número entero positivo y no superar los 12 meses.";
+                return;
+            }
+
+            if (isNaN(peso) || peso <= 0 || peso > 2.5 || !/^\d+(\.\d{1,2})?$/.test(peso)) {
+                document.getElementById("errorPeso").textContent = "El peso debe ser un número real positivo con un máximo de 2.5 kg y no puede superar los 2 decimales.";
+                return;
+            }
+
+            if (!["reproduccion", "engorde"].includes(proposito)) {
+                document.getElementById("errorProposito").textContent = "El propósito debe ser 'reproduccion' o 'engorde'.";
+                return;
+            }
+
+            let conejoExistente = conejos.find(conejo => conejo.codigo === codigo);
+            if (conejoExistente) {
+                // Modificar Conejo
+                conejoExistente.raza = raza;
+                conejoExistente.sexo = sexo;
+                conejoExistente.edad = edad;
+                conejoExistente.peso = peso;
+                conejoExistente.proposito = proposito;
+                mensajeExito.textContent = "Conejo modificado con éxito.";
+            } else {
+                // Crear Nuevo Conejo
+                conejos.push({ raza, codigo, sexo, edad, peso, proposito });
+                mensajeExito.textContent = "Conejo registrado con éxito.";
+            }
+            mensajeExito.style.display = "block";
+            document.getElementById("formConejo").style.display = "none";
+            mostrarTablaConejos('editar'); // Recargar tabla
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controlar Vacunación y Desparasitación</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        .navbar {
+            background-color: #7b4e9b;
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 20px;
+        }
+        .navbar-brand, .nav-link {
+            font-size: 20px;
+            color: #fff;
+        }
+        .container-fluid {
+            display: flex;
+            min-height: 100vh;
+            padding: 0;
+        }
+        .sidebar {
+            background-color: #7b4e9b;
+            width: 250px;
+            padding: 20px;
+            border-right: 2px solid #ddd;
+        }
+        .sidebar .btn {
+            width: 100%;
+            margin-bottom: 10px;
+            background-color: #9b6fb0;
+            color: white;
+            font-size: 18px;
+            border: none;
+        }
+        .sidebar .btn:hover {
+            background-color: #7b4e9b;
+        }
+        .main-content {
+            flex-grow: 1;
+            padding: 20px;
+        }
+        .error {
+            color: red;
+            font-size: 14px;
+        }
+        .search-table {
+            margin-top: 20px;
+        }
+        .search-error {
+            color: red;
+            margin-top: 10px;
+        }
+        .list-group-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .list-group-item span {
+            flex: 1;
+            text-align: center;
+        }
+        .list-group-item span.label {
+            color: white;
+            font-weight: bold;
+        }
+        .list-group-item.header {
+            background-color: black;
+            color: white;
+        }
+        .vacunas, .desparasitacion {
+            margin-top: 10px;
+        }
+        .active {
+            background-color: rgba(0, 123, 255, 0.1) !important; /* Transparent blue */
+            border-color: rgba(0, 123, 255, 0.1) !important; /* Transparent blue */
+            color: black !important; /* Ensure text color remains black */
+        }
+        .disabled-checkbox {
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div></div>
+    </nav>
+    <div class="container-fluid">
+        <div class="sidebar">
+            <button class="btn btn-regresar" onclick="window.location.href='crianza.html'">← Regresar</button>
+        </div>
+        <div class="main-content">
+            <h1>Controlar Vacunación y Desparasitación</h1>
+            <p>Una vacuna se realiza cada año y una desparasitación se realiza cada mes.</p>
+            <div class="form-group">
+                <label for="buscarTipo">Buscar por</label>
+                <select id="buscarTipo" class="form-control" onchange="cambiarTipoBusqueda()">
+                    <option value="codigo">Código</option>
+                    <option value="raza">Raza</option>
+                </select>
+            </div>
+            <div class="form-group" id="buscarCodigoDiv">
+                <label for="buscarCodigo">Buscar por Código</label>
+                <input type="text" id="buscarCodigo" class="form-control" oninput="buscarConejo()" placeholder="Ingrese código del conejo">
+                <small id="errorBusqueda" class="search-error"></small>
+            </div>
+            <div class="form-group" id="buscarRazaDiv" style="display: none;">
+                <label for="buscarRaza">Buscar por Raza</label>
+                <input type="text" id="buscarRaza" class="form-control" oninput="buscarConejo()" placeholder="Ingrese raza del conejo">
+                <small id="errorBusquedaRaza" class="search-error"></small>
+            </div>
+            <div class="form-group">
+                <label for="conejoList">Seleccionar Conejos</label>
+                <div id="conejoList" class="list-group">
+                    <div class="list-group-item header">
+                        <span class="label">Número de Jaula</span>
+                        <span class="label">Código</span>
+                        <span class="label">Edad (meses)</span> <!-- Updated header -->
+                        <span class="label">Vacunas</span>
+                        <span class="label">Desparasitación</span>
+                    </div>
+                    <!-- Conejos serán cargados aquí -->
+                </div>
+                <small class="error" id="errorConejo"></small>
+            </div>
+            <button class="btn btn-primary" onclick="registrarVacunacion()">Registrar Vacunación y Desparasitación</button>
+            <div id="mensajeExito" class="alert alert-success mt-3" style="display:none;"></div>
+            <div id="mensajeError" class="alert alert-danger mt-3" style="display:none;"></div>
+        </div>
+    </div>
+
+    <script>
+        let conejos = [
+            { jaula: 1, codigo: "R001", edad: 6 },
+            { jaula: 2, codigo: "D002", edad: 8 },
+            { jaula: 3, codigo: "L003", edad: 4 }
+        ];
+
+        let historialVacunas = JSON.parse(localStorage.getItem('historialVacunas')) || [];
+        let historialDesparasitacion = JSON.parse(localStorage.getItem('historialDesparasitacion')) || [];
+
+        let seleccionados = [];
+
+        function cargarDatos() {
+            actualizarListaConejos();
+        }
+
+        function actualizarListaConejos() {
+            let conejoList = document.getElementById("conejoList");
+            conejoList.innerHTML = `
+                <div class="list-group-item header">
+                    <span class="label">Número de Jaula</span>
+                    <span class="label">Código</span>
+                    <span class="label">Edad (meses)</span> <!-- Updated header -->
+                    <span class="label">Vacunas</span>
+                    <span class="label">Desparasitación</span>
+                </div>
+            `;
+
+            conejos.forEach(conejo => {
+                let item = document.createElement("div");
+                item.className = "list-group-item";
+                item.innerHTML = `
+                    <span>${conejo.jaula}</span>
+                    <span>${conejo.codigo}</span>
+                    <span>${conejo.edad}</span> <!-- Updated data -->
+                    <span>
+                        <label>¿Se aplicó?</label><br>
+                        <label>Mixomatosis <input type="checkbox" id="vacuna1-${conejo.codigo}" value="mixomatosis"></label><br>
+                        <label>VHD <input type="checkbox" id="vacuna2-${conejo.codigo}" value="VHD"></label>
+                    </span>
+                    <span>
+                        <label>¿Se aplicó?</label><br>
+                        <input type="checkbox" id="desparasitacion-${conejo.codigo}" value="desparasitacion">
+                    </span>
+                `;
+                item.onclick = (event) => {
+                    if (event.target.tagName !== 'INPUT') {
+                        seleccionarConejo(conejo.codigo);
+                    }
+                };
+                conejoList.appendChild(item);
+            });
+        }
+
+        function seleccionarConejo(codigo) {
+            let index = seleccionados.indexOf(codigo);
+            if (index === -1) {
+                seleccionados.push(codigo);
+            } else {
+                seleccionados.splice(index, 1);
+                document.getElementById(`vacuna1-${codigo}`).checked = false;
+                document.getElementById(`vacuna2-${codigo}`).checked = false;
+                document.getElementById(`desparasitacion-${codigo}`).checked = false;
+            }
+            actualizarSeleccion();
+        }
+
+        function actualizarSeleccion() {
+            let items = document.querySelectorAll("#conejoList .list-group-item");
+            items.forEach(item => item.classList.remove("active"));
+            seleccionados.forEach(codigo => {
+                let selectedItem = Array.from(items).find(item => item.textContent.includes(codigo));
+                if (selectedItem) {
+                    selectedItem.classList.add("active");
+                    let vacuna1 = document.getElementById(`vacuna1-${codigo}`);
+                    let vacuna2 = document.getElementById(`vacuna2-${codigo}`);
+                    let desparasitacion = document.getElementById(`desparasitacion-${codigo}`);
+                    if (vacuna1) vacuna1.disabled = false;
+                    if (vacuna2) vacuna2.disabled = false;
+                    if (desparasitacion) desparasitacion.disabled = false;
+                    if (vacuna1) vacuna1.classList.remove("disabled-checkbox");
+                    if (vacuna2) vacuna2.classList.remove("disabled-checkbox");
+                    if (desparasitacion) desparasitacion.classList.remove("disabled-checkbox");
+                }
+            });
+            items.forEach(item => {
+                let codigo = item.querySelector("span:nth-child(2)").textContent;
+                if (!seleccionados.includes(codigo)) {
+                    let vacuna1 = document.getElementById(`vacuna1-${codigo}`);
+                    let vacuna2 = document.getElementById(`vacuna2-${codigo}`);
+                    let desparasitacion = document.getElementById(`desparasitacion-${codigo}`);
+                    if (vacuna1) vacuna1.disabled = true;
+                    if (vacuna2) vacuna2.disabled = true;
+                    if (desparasitacion) desparasitacion.disabled = true;
+                    if (vacuna1) vacuna1.checked = false;
+                    if (vacuna2) vacuna2.checked = false;
+                    if (desparasitacion) desparasitacion.checked = false;
+                    if (vacuna1) vacuna1.classList.add("disabled-checkbox");
+                    if (vacuna2) vacuna2.classList.add("disabled-checkbox");
+                    if (desparasitacion) desparasitacion.classList.add("disabled-checkbox");
+                }
+            });
+        }
+
+        function registrarVacunacion() {
+            let mensajeExito = document.getElementById("mensajeExito");
+            let mensajeError = document.getElementById("mensajeError");
+            let errorConejo = document.getElementById("errorConejo");
+
+            if (seleccionados.length === 0) {
+                mensajeError.textContent = "Debe seleccionar al menos un conejo.";
+                mensajeError.style.display = "block";
+                setTimeout(() => mensajeError.style.display = "none", 5000);
+                return;
+            }
+
+            let registrosVacunas = [];
+            let registrosDesparasitacion = [];
+
+            seleccionados.forEach(codigo => {
+                let conejo = conejos.find(c => c.codigo === codigo);
+                let fecha = new Date().toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                let vacunas = [];
+                if (document.getElementById(`vacuna1-${codigo}`).checked) vacunas.push("mixomatosis");
+                if (document.getElementById(`vacuna2-${codigo}`).checked) vacunas.push("VHD");
+                let desparasitacion = document.getElementById(`desparasitacion-${codigo}`).checked;
+                if (vacunas.length > 0) {
+                    registrosVacunas.push({ codigo: conejo.codigo, fecha, vacunas });
+                }
+                if (desparasitacion) {
+                    registrosDesparasitacion.push({ codigo: conejo.codigo, fecha });
+                }
+            });
+
+            if (registrosVacunas.length === 0 && registrosDesparasitacion.length === 0) {
+                mensajeError.textContent = "Debe seleccionar al menos una vacuna o confirmar la desparasitación.";
+                mensajeError.style.display = "block";
+                setTimeout(() => mensajeError.style.display = "none", 5000);
+                return;
+            }
+
+            let fechaActual = new Date();
+            let unAnoAtras = new Date();
+            unAnoAtras.setFullYear(fechaActual.getFullYear() - 1);
+            let unMesAtras = new Date();
+            unMesAtras.setMonth(fechaActual.getMonth() - 1);
+
+            for (let registro of registrosVacunas) {
+                let ultimoRegistroVacuna = historialVacunas.find(entry => entry.codigo === registro.codigo && entry.vacunas.some(vacuna => registro.vacunas.includes(vacuna)));
+                if (ultimoRegistroVacuna && new Date(ultimoRegistroVacuna.fecha) > unAnoAtras) {
+                    mensajeError.textContent = `Debe pasar un año para registrar una nueva vacuna de tipo ${ultimoRegistroVacuna.vacunas.join(", ")} para el conejo ${registro.codigo}. Última vacuna registrada el ${ultimoRegistroVacuna.fecha}.`;
+                    mensajeError.style.display = "block";
+                    setTimeout(() => mensajeError.style.display = "none", 5000);
+                    return;
+                }
+            }
+
+            for (let registro of registrosDesparasitacion) {
+                let ultimoRegistroDesparasitacion = historialDesparasitacion.find(entry => entry.codigo === registro.codigo);
+                if (ultimoRegistroDesparasitacion && new Date(ultimoRegistroDesparasitacion.fecha) > unMesAtras) {
+                    mensajeError.textContent = `Debe pasar un mes para registrar una nueva desparasitación para el conejo ${registro.codigo}. Última desparasitación registrada el ${ultimoRegistroDesparasitacion.fecha}.`;
+                    mensajeError.style.display = "block";
+                    setTimeout(() => mensajeError.style.display = "none", 5000);
+                    return;
+                }
+            }
+
+            historialVacunas.push(...registrosVacunas);
+            historialDesparasitacion.push(...registrosDesparasitacion);
+            localStorage.setItem('historialVacunas', JSON.stringify(historialVacunas));
+            localStorage.setItem('historialDesparasitacion', JSON.stringify(historialDesparasitacion));
+
+            let mensaje = "Vacunación y desparasitación registrada con éxito.";
+            if (registrosVacunas.length > 0 && registrosDesparasitacion.length > 0) {
+                mensaje = "Vacunación y desparasitación registrada con éxito.";
+            } else if (registrosVacunas.length > 0) {
+                mensaje = "Vacunación registrada con éxito.";
+            } else if (registrosDesparasitacion.length > 0) {
+                mensaje = "Desparasitación registrada con éxito.";
+            }
+
+            mensajeExito.textContent = mensaje;
+            mensajeExito.style.display = "block";
+            mensajeError.style.display = "none";
+            setTimeout(() => mensajeExito.style.display = "none", 5000);
+        }
+
+        function cambiarTipoBusqueda() {
+            let tipoBusqueda = document.getElementById("buscarTipo").value;
+            if (tipoBusqueda === "codigo") {
+                document.getElementById("buscarCodigoDiv").style.display = "block";
+                document.getElementById("buscarRazaDiv").style.display = "none";
+            } else {
+                document.getElementById("buscarCodigoDiv").style.display = "none";
+                document.getElementById("buscarRazaDiv").style.display = "block";
+            }
+        }
+
+        function buscarConejo() {
+            let tipoBusqueda = document.getElementById("buscarTipo").value;
+            let errorBusqueda = document.getElementById("errorBusqueda");
+            let errorBusquedaRaza = document.getElementById("errorBusquedaRaza");
+            let conejoList = document.getElementById("conejoList");
+            conejoList.innerHTML = `
+                <div class="list-group-item header">
+                    <span class="label">Número de Jaula</span>
+                    <span class="label">Código</span>
+                    <span class="label">Edad (meses)</span> <!-- Updated header -->
+                    <span class="label">Vacunas</span>
+                    <span class="label">Desparasitación</span>
+                </div>
+            `;
+
+            if (tipoBusqueda === "codigo") {
+                let codigo = document.getElementById("buscarCodigo").value.toLowerCase();
+                if (codigo === "") {
+                    errorBusqueda.textContent = "";
+                    actualizarListaConejos();
+                    return;
+                }
+
+                let regex = /^[rdl]\d{3}$/i;
+                if (!regex.test(codigo)) {
+                    errorBusqueda.textContent = "El formato del código es incorrecto. Debe ser la primera letra de la raza seleccionada y una numeración secuencial de 3 dígitos.";
+                    return;
+                }
+
+                let conejoEncontrado = conejos.filter(conejo => conejo.codigo.toLowerCase() === codigo);
+
+                if (conejoEncontrado.length === 0) {
+                    errorBusqueda.textContent = "No se encontró ningún conejo con ese código.";
+                    return;
+                }
+
+                errorBusqueda.textContent = ""; // Clear error message if valid input is entered
+
+                conejoEncontrado.forEach(conejo => {
+                    let item = document.createElement("div");
+                    item.className = "list-group-item";
+                    item.innerHTML = `
+                        <span>${conejo.jaula}</span>
+                        <span>${conejo.codigo}</span>
+                        <span>${conejo.edad}</span> <!-- Updated data -->
+                        <span>
+                            <label>¿Se aplicó?</label><br>
+                            <label>Mixomatosis <input type="checkbox" id="vacuna1-${conejo.codigo}" value="mixomatosis"></label><br>
+                            <label>VHD <input type="checkbox" id="vacuna2-${conejo.codigo}" value="VHD"></label>
+                        </span>
+                        <span>
+                            <label>¿Se aplicó?</label><br>
+                            <input type="checkbox" id="desparasitacion-${conejo.codigo}" value="desparasitacion">
+                        </span>
+                    `;
+                    item.onclick = (event) => {
+                        if (event.target.tagName !== 'INPUT') {
+                            seleccionarConejo(conejo.codigo);
+                        }
+                    };
+                    conejoList.appendChild(item);
+                });
+            } else {
+                let raza = document.getElementById("buscarRaza").value.toLowerCase();
+                if (raza === "") {
+                    errorBusquedaRaza.textContent = "";
+                    actualizarListaConejos();
+                    return;
+                }
+
+                let regex = /^[a-zA-Z]+$/;
+                if (!regex.test(raza)) {
+                    errorBusquedaRaza.textContent = "El nombre de la raza solo debe contener letras.";
+                    return;
+                }
+
+                let conejoEncontrado = conejos.filter(conejo => conejo.raza.toLowerCase().includes(raza));
+
+                if (conejoEncontrado.length === 0) {
+                    errorBusquedaRaza.textContent = "No se encontró ningún conejo con esa raza.";
+                    return;
+                }
+
+                errorBusquedaRaza.textContent = ""; // Clear error message if valid input is entered
+
+                conejoEncontrado.forEach(conejo => {
+                    let item = document.createElement("div");
+                    item.className = "list-group-item";
+                    item.innerHTML = `
+                        <span>${conejo.jaula}</span>
+                        <span>${conejo.codigo}</span>
+                        <span>${conejo.edad}</span> <!-- Updated data -->
+                        <span>
+                            <label>¿Se aplicó?</label><br>
+                            <label>Mixomatosis <input type="checkbox" id="vacuna1-${conejo.codigo}" value="mixomatosis"></label><br>
+                            <label>VHD <input type="checkbox" id="vacuna2-${conejo.codigo}" value="VHD"></label>
+                        </span>
+                        <span>
+                            <label>¿Se aplicó?</label><br>
+                            <input type="checkbox" id="desparasitacion-${conejo.codigo}" value="desparasitacion">
+                        </span>
+                    `;
+                    item.onclick = (event) => {
+                        if (event.target.tagName !== 'INPUT') {
+                            seleccionarConejo(conejo.codigo);
+                        }
+                    };
+                    conejoList.appendChild(item);
+                });
+            }
+        }
+
+        window.onload = cargarDatos;
+    </script>
+</body>
+</html>

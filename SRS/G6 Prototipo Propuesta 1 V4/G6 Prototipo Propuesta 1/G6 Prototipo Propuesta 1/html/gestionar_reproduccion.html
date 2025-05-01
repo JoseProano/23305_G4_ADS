@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestionar Reproducción y Parto</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        .navbar {
+            background-color: #7b4e9b;
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 20px;
+        }
+        .navbar-brand, .nav-link {
+            font-size: 20px;
+            color: #fff;
+        }
+        .container-fluid {
+            display: flex;
+            min-height: 100vh;
+            padding: 0;
+        }
+        .sidebar {
+            background-color: #7b4e9b;
+            width: 250px;
+            padding: 20px;
+            border-right: 2px solid #ddd;
+        }
+        .sidebar .btn {
+            width: 100%;
+            margin-bottom: 10px;
+            background-color: #9b6fb0;
+            color: white;
+            font-size: 18px;
+            border: none;
+        }
+        .sidebar .btn:hover {
+            background-color: #7b4e9b;
+        }
+        .main-content {
+            flex-grow: 1;
+            padding: 20px;
+        }
+        .error {
+            color: red;
+            font-size: 14px;
+        }
+        .search-table {
+            margin-top: 20px;
+        }
+        .search-error {
+            color: red;
+            margin-top: 10px;
+        }
+        .table th, .table td {
+            text-align: center;
+            vertical-align: middle;
+        }
+        .table th {
+            background-color: black;
+            color: white;
+        }
+        .list-group-item {
+            display: flex;
+            justify-content: space-between;
+        }
+        .list-group-item span {
+            flex: 1;
+            text-align: center;
+        }
+        .list-group-item span.label {
+            color: white;
+            font-weight: bold;
+        }
+        .list-group-item.header {
+            background-color: black;
+            color: white;
+        }
+        .active {
+            background-color: rgba(0, 123, 255, 0.1) !important; /* Transparent blue */
+            border-color: rgba(0, 123, 255, 0.1) !important; /* Transparent blue */
+            color: black !important; /* Ensure text color remains black */
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgb(0,0,0);
+            background-color: rgba(0,0,0,0.4);
+            padding-top: 60px;
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 500px;
+            text-align: center;
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div></div>
+    </nav>
+    <div class="container-fluid">
+        <div class="sidebar">
+            <button class="btn" onclick="mostrarFormulario('registrar')">Registrar Monta</button>
+            <button class="btn" onclick="mostrarFormulario('eliminar')">Eliminar Parto</button>
+            <button class="btn btn-regresar" onclick="window.location.href='crianza.html'">← Regresar</button>
+        </div>
+        <div class="main-content">
+            <div id="registrarMonta" style="display: none;">
+                <h1>Registrar Monta</h1>
+                <div id="buscarDiv">
+                    <div class="form-group">
+                        <label for="buscarTipo">Buscar por</label>
+                        <select id="buscarTipo" class="form-control" onchange="cambiarTipoBusqueda()">
+                            <option value="codigo">Código</option>
+                            <option value="raza">Raza</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="buscarCodigoDiv">
+                        <label for="buscarCodigo">Buscar por Código</label>
+                        <input type="text" id="buscarCodigo" class="form-control" oninput="buscarConeja()" placeholder="Ingrese código de la coneja">
+                        <small id="errorBusqueda" class="search-error"></small>
+                    </div>
+                    <div class="form-group" id="buscarRazaDiv" style="display: none;">
+                        <label for="buscarRaza">Buscar por Raza</label>
+                        <input type="text" id="buscarRaza" class="form-control" oninput="buscarConeja()" placeholder="Ingrese raza de la coneja">
+                        <small id="errorBusquedaRaza" class="search-error"></small>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="conejaList">Seleccionar Coneja</label>
+                    <div id="conejaList" class="list-group">
+                        <div class="list-group-item header">
+                            <span class="label">Número de Jaula</span>
+                            <span class="label">Código</span>
+                            <span class="label">Edad (meses)</span> <!-- Updated header -->
+                            <span class="label">Sexo</span>
+                        </div>
+                        <!-- Conejas serán cargadas aquí -->
+                    </div>
+                    <small class="error" id="errorConeja"></small>
+                </div>
+                <div id="formMonta" style="display: none;">
+                    <div class="form-group">
+                        <label for="jaula">Número de Jaula</label>
+                        <input type="text" id="jaula" class="form-control" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="codigo">Código de la Coneja</label>
+                        <input type="text" id="codigo" class="form-control" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="edad">Edad en Meses</label>
+                        <input type="text" id="edad" class="form-control" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="fechaMonta">Fecha de Monta</label>
+                        <input type="date" id="fechaMonta" class="form-control" onchange="calcularFechaParto()">
+                        <small class="error" id="errorFecha"></small>
+                    </div>
+                    <div class="form-group">
+                        <label for="fechaParto">Fecha de Parto</label>
+                        <input type="text" id="fechaParto" class="form-control" readonly>
+                    </div>
+                    <button class="btn btn-primary" onclick="guardarMonta()">Guardar Monta</button>
+                </div>
+                <div id="mensajeExito" class="alert alert-success mt-3" style="display:none;"></div>
+                <div id="mensajeError" class="alert alert-danger mt-3" style="display:none;"></div>
+            </div>
+            <div id="eliminarParto" style="display: none;">
+                <h1>Eliminar Parto</h1>
+                <div class="form-group">
+                    <label for="buscarTipoEliminar">Buscar por</label>
+                    <select id="buscarTipoEliminar" class="form-control" onchange="cambiarTipoBusquedaEliminar()">
+                        <option value="codigo">Código</option>
+                        <option value="raza">Raza</option>
+                    </select>
+                </div>
+                <div class="form-group" id="buscarCodigoDivEliminar">
+                    <label for="buscarCodigoEliminar">Buscar por Código</label>
+                    <input type="text" id="buscarCodigoEliminar" class="form-control" oninput="buscarConejaEliminar()" placeholder="Ingrese código de la coneja">
+                    <small id="errorBusquedaEliminar" class="search-error"></small>
+                </div>
+                <div class="form-group" id="buscarRazaDivEliminar" style="display: none;">
+                    <label for="buscarRazaEliminar">Buscar por Raza</label>
+                    <input type="text" id="buscarRazaEliminar" class="form-control" oninput="buscarConejaEliminar()" placeholder="Ingrese raza de la coneja">
+                    <small id="errorBusquedaRazaEliminar" class="search-error"></small>
+                </div>
+                <div id="tablaResultados" class="list-group">
+                    <div class="list-group-item header">
+                        <span class="label">Número de Jaula</span>
+                        <span class="label">Código</span>
+                        <span class="label">Edad (meses)</span> <!-- Updated header -->
+                        <span class="label">Sexo</span>
+                        <span class="label">Fecha de Monta</span>
+                        <span class="label">Fecha de Parto</span>
+                        <span class="label">Acción</span>
+                    </div>
+                    <!-- Resultados serán cargados aquí -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="deleteModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <p>¿Está seguro de que desea eliminar el parto de esta coneja?</p>
+            <button id="confirmDelete" class="btn btn-danger">Eliminar</button>
+            <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+        </div>
+    </div>
+
+    <script>
+        let conejas = [
+            { jaula: 1, codigo: "R001", raza: "rex", sexo: "hembra", edad: 6, fechaMonta: null, fechaParto: null },
+            { jaula: 2, codigo: "D002", raza: "danes", sexo: "hembra", edad: 8, fechaMonta: '2025-01-01', fechaParto: '2025-01-31' },
+            { jaula: 3, codigo: "L003", raza: "leon", sexo: "hembra", edad: 4, fechaMonta: null, fechaParto: null }
+        ];
+
+        let conejaAEliminar = null;
+
+        function mostrarFormulario(accion) {
+            let registrarMonta = document.getElementById("registrarMonta");
+            let eliminarParto = document.getElementById("eliminarParto");
+            let mensajeExito = document.getElementById("mensajeExito");
+            let mensajeError = document.getElementById("mensajeError");
+
+            // Reiniciar mensajes y errores
+            mensajeExito.style.display = "none";
+            mensajeError.style.display = "none";
+            document.getElementById("errorConeja").textContent = "";
+            document.getElementById("errorFecha").textContent = "";
+            document.getElementById("errorBusqueda").textContent = "";
+            document.getElementById("errorBusquedaEliminar").textContent = "";
+            document.getElementById("errorBusquedaRazaEliminar").textContent = "";
+
+            if (accion === "registrar") {
+                registrarMonta.style.display = "block";
+                eliminarParto.style.display = "none";
+                actualizarListaConejas();
+            } else if (accion === "eliminar") {
+                registrarMonta.style.display = "none";
+                eliminarParto.style.display = "block";
+                mostrarTablaConejas();
+            } else {
+                registrarMonta.style.display = "none";
+                eliminarParto.style.display = "none";
+            }
+        }
+
+        function actualizarListaConejas() {
+            let conejaList = document.getElementById("conejaList");
+            conejaList.innerHTML = `
+                <div class="list-group-item header">
+                    <span class="label">Número de Jaula</span>
+                    <span class="label">Código</span>
+                    <span class="label">Edad (meses)</span> <!-- Updated header -->
+                    <span class="label">Sexo</span>
+                </div>
+            `;
+
+            conejas.forEach(coneja => {
+                if (coneja.edad >= 4 && coneja.sexo === "hembra") {
+                    let item = document.createElement("div");
+                    item.className = "list-group-item list-group-item-action";
+                    item.innerHTML = `
+                        <span>${coneja.jaula}</span>
+                        <span>${coneja.codigo}</span>
+                        <span>${coneja.edad}</span> <!-- Updated data -->
+                        <span>${coneja.sexo}</span>
+                    `;
+                    item.onclick = () => seleccionarConeja(coneja.codigo);
+                    conejaList.appendChild(item);
+                }
+            });
+        }
+
+        function seleccionarConeja(codigo) {
+            let items = document.querySelectorAll("#conejaList .list-group-item");
+            items.forEach(item => item.classList.remove("active"));
+            let selectedItem = Array.from(items).find(item => item.textContent.includes(codigo));
+            if (selectedItem) {
+                selectedItem.classList.add("active");
+            }
+
+            let coneja = conejas.find(c => c.codigo === codigo);
+            if (coneja) {
+                document.getElementById("jaula").value = coneja.jaula;
+                document.getElementById("codigo").value = coneja.codigo;
+                document.getElementById("edad").value = coneja.edad;
+                document.getElementById("formMonta").style.display = "block";
+                document.getElementById("conejaList").style.display = "none";
+                document.getElementById("buscarDiv").style.display = "none";
+            }
+        }
+
+        function calcularFechaParto() {
+            let fechaMonta = document.getElementById("fechaMonta").value;
+            if (fechaMonta) {
+                let fechaParto = new Date(fechaMonta);
+                fechaParto.setDate(fechaParto.getDate() + 30);
+                document.getElementById("fechaParto").value = fechaParto.toLocaleDateString('es-ES');
+            }
+        }
+
+        function guardarMonta() {
+            let mensajeExito = document.getElementById("mensajeExito");
+            let mensajeError = document.getElementById("mensajeError");
+            let errorConeja = document.getElementById("errorConeja");
+            let errorFecha = document.getElementById("errorFecha");
+
+            let conejaSeleccionada = document.getElementById("codigo").value;
+            let fechaMonta = document.getElementById("fechaMonta").value;
+
+            if (!conejaSeleccionada) {
+                errorConeja.textContent = "Debe seleccionar una coneja.";
+                return;
+            }
+
+            if (!fechaMonta) {
+                errorFecha.textContent = "Debe ingresar una fecha de monta.";
+                return;
+            }
+
+            let coneja = conejas.find(c => c.codigo === conejaSeleccionada);
+            let fechaParto = new Date(fechaMonta);
+            fechaParto.setDate(fechaParto.getDate() + 30);
+
+            if (coneja.fechaMonta && new Date(coneja.fechaMonta) <= new Date(fechaMonta) && new Date(fechaMonta) <= new Date(coneja.fechaParto)) {
+                mensajeError.textContent = "No se puede registrar porque ya existe una fecha de parto registrada.";
+                mensajeError.style.display = "block";
+                return;
+            }
+
+            coneja.fechaMonta = fechaMonta;
+            coneja.fechaParto = fechaParto.toISOString().split('T')[0];
+
+            document.getElementById("fechaParto").value = fechaParto.toLocaleDateString('es-ES');
+
+            mensajeExito.textContent = "Monta registrada con éxito.";
+            mensajeExito.style.display = "block";
+            mensajeError.style.display = "none";
+            document.getElementById("formMonta").style.display = "none";
+            document.getElementById("conejaList").style.display = "block";
+            document.getElementById("buscarDiv").style.display = "block";
+            resetFormularioRegistrar();
+            actualizarListaConejas();
+            setTimeout(() => {
+                mensajeExito.style.display = "none";
+            }, 3000); // Hide the success message after 3 seconds
+        }
+
+        function resetFormularioRegistrar() {
+            document.getElementById("buscarCodigo").value = "";
+            document.getElementById("buscarRaza").value = "";
+            document.getElementById("jaula").value = "";
+            document.getElementById("codigo").value = "";
+            document.getElementById("edad").value = "";
+            document.getElementById("fechaMonta").value = "";
+            document.getElementById("fechaParto").value = "";
+            document.getElementById("formMonta").style.display = "none";
+            document.getElementById("conejaList").style.display = "block";
+            document.getElementById("buscarDiv").style.display = "block";
+        }
+
+        function mostrarTablaConejas() {
+            let resultados = document.getElementById("tablaResultados");
+            resultados.innerHTML = `
+                <div class="list-group-item header">
+                    <span class="label">Número de Jaula</span>
+                    <span class="label">Código</span>
+                    <span class="label">Edad (meses)</span> <!-- Updated header -->
+                    <span class="label">Sexo</span>
+                    <span class="label">Fecha de Monta</span>
+                    <span class="label">Fecha de Parto</span>
+                    <span class="label">Acción</span>
+                </div>
+            `;
+
+            conejas.forEach(coneja => {
+                if (coneja.fechaMonta && coneja.fechaParto) {
+                    let item = document.createElement("div");
+                    item.className = "list-group-item list-group-item-action";
+                    item.innerHTML = `
+                        <span>${coneja.jaula}</span>
+                        <span>${coneja.codigo}</span>
+                        <span>${coneja.edad}</span> <!-- Updated data -->
+                        <span>${coneja.sexo}</span>
+                        <span>${new Date(coneja.fechaMonta).toLocaleDateString('es-ES')}</span>
+                        <span>${new Date(coneja.fechaParto).toLocaleDateString('es-ES')}</span>
+                        <span><button class="btn btn-danger" onclick="confirmarEliminarParto('${coneja.codigo}')">Eliminar</button></span>
+                    `;
+                    resultados.appendChild(item);
+                }
+            });
+        }
+
+        function confirmarEliminarParto(codigo) {
+            conejaAEliminar = codigo;
+            document.getElementById("deleteModal").style.display = "block";
+        }
+
+        document.getElementById("confirmDelete").addEventListener("click", function() {
+            if (conejaAEliminar !== null) {
+                let coneja = conejas.find(c => c.codigo === conejaAEliminar);
+                if (coneja) {
+                    coneja.fechaMonta = null;
+                    coneja.fechaParto = null;
+                    document.getElementById("mensajeExito").textContent = "Parto eliminado con éxito.";
+                    document.getElementById("mensajeExito").style.display = "block";
+                    mostrarTablaConejas();
+                    closeModal();
+                }
+            }
+        });
+
+        function closeModal() {
+            document.getElementById("deleteModal").style.display = "none";
+            conejaAEliminar = null;
+        }
+
+        function buscarConeja() {
+            let tipoBusqueda = document.getElementById("buscarTipo").value;
+            let errorBusqueda = document.getElementById("errorBusqueda");
+            let errorBusquedaRaza = document.getElementById("errorBusquedaRaza");
+            let conejaList = document.getElementById("conejaList");
+            conejaList.innerHTML = `
+                <div class="list-group-item header">
+                    <span class="label">Número de Jaula</span>
+                    <span class="label">Código</span>
+                    <span class="label">Edad (meses)</span> <!-- Updated header -->
+                    <span class="label">Sexo</span>
+                </div>
+            `;
+
+            if (tipoBusqueda === "codigo") {
+                let codigo = document.getElementById("buscarCodigo").value.toLowerCase();
+                if (codigo === "") {
+                    errorBusqueda.textContent = "";
+                    actualizarListaConejas();
+                    return;
+                }
+
+                let regex = /^[rdl]\d{3}$/i;
+                if (!regex.test(codigo)) {
+                    errorBusqueda.textContent = "El formato del código es incorrecto. Debe ser la primera letra de la raza seleccionada y una numeración secuencial de 3 dígitos.";
+                    return;
+                }
+
+                let conejaEncontrada = conejas.filter(coneja => coneja.codigo.toLowerCase() === codigo);
+
+                if (conejaEncontrada.length === 0) {
+                    errorBusqueda.textContent = "No se encontró ninguna coneja con ese código.";
+                    return;
+                }
+
+                errorBusqueda.textContent = ""; // Clear error message if valid input is entered
+
+                conejaEncontrada.forEach(coneja => {
+                    let item = document.createElement("div");
+                    item.className = "list-group-item list-group-item-action";
+                    item.innerHTML = `
+                        <span>${coneja.jaula}</span>
+                        <span>${coneja.codigo}</span>
+                        <span>${coneja.edad}</span> <!-- Updated data -->
+                        <span>${coneja.sexo}</span>
+                    `;
+                    item.onclick = () => seleccionarConeja(coneja.codigo);
+                    conejaList.appendChild(item);
+                });
+            } else {
+                let raza = document.getElementById("buscarRaza").value.toLowerCase();
+                if (raza === "") {
+                    errorBusquedaRaza.textContent = "";
+                    actualizarListaConejas();
+                    return;
+                }
+
+                let conejaEncontrada = conejas.filter(coneja => coneja.raza.toLowerCase() === raza);
+
+                if (conejaEncontrada.length === 0) {
+                    errorBusquedaRaza.textContent = "No se encontró ninguna coneja con esa raza.";
+                    return;
+                }
+
+                errorBusquedaRaza.textContent = ""; // Clear error message if valid input is entered
+
+                conejaEncontrada.forEach(coneja => {
+                    let item = document.createElement("div");
+                    item.className = "list-group-item list-group-item-action";
+                    item.innerHTML = `
+                        <span>${coneja.jaula}</span>
+                        <span>${coneja.codigo}</span>
+                        <span>${coneja.edad}</span> <!-- Updated data -->
+                        <span>${coneja.sexo}</span>
+                    `;
+                    item.onclick = () => seleccionarConeja(coneja.codigo);
+                    conejaList.appendChild(item);
+                });
+            }
+        }
+
+        function buscarConejaEliminar() {
+            let tipoBusqueda = document.getElementById("buscarTipoEliminar").value;
+            let errorBusquedaEliminar = document.getElementById("errorBusquedaEliminar");
+            let errorBusquedaRazaEliminar = document.getElementById("errorBusquedaRazaEliminar");
+            let resultados = document.getElementById("tablaResultados");
+            resultados.innerHTML = `
+                <div class="list-group-item header">
+                    <span class="label">Número de Jaula</span>
+                    <span class="label">Código</span>
+                    <span class="label">Edad (meses)</span> <!-- Updated header -->
+                    <span class="label">Sexo</span>
+                    <span class="label">Fecha de Monta</span>
+                    <span class="label">Fecha de Parto</span>
+                    <span class="label">Acción</span>
+                </div>
+            `;
+
+            if (tipoBusqueda === "codigo") {
+                let codigo = document.getElementById("buscarCodigoEliminar").value.toLowerCase();
+                if (codigo === "") {
+                    errorBusquedaEliminar.textContent = "";
+                    mostrarTablaConejas();
+                    return;
+                }
+
+                let regex = /^[rdl]\d{3}$/i;
+                if (!regex.test(codigo)) {
+                    errorBusquedaEliminar.textContent = "El formato del código es incorrecto. Debe ser la primera letra de la raza seleccionada y una numeración secuencial de 3 dígitos.";
+                    return;
+                }
+
+                let conejaEncontrada = conejas.filter(coneja => coneja.codigo.toLowerCase() === codigo);
+
+                if (conejaEncontrada.length === 0) {
+                    errorBusquedaEliminar.textContent = "No se encontró ninguna coneja con ese código.";
+                    return;
+                }
+
+                errorBusquedaEliminar.textContent = ""; // Clear error message if valid input is entered
+
+                conejaEncontrada.forEach(coneja => {
+                    if (coneja.fechaMonta && coneja.fechaParto) {
+                        let item = document.createElement("div");
+                        item.className = "list-group-item list-group-item-action";
+                        item.innerHTML = `
+                            <span>${coneja.jaula}</span>
+                            <span>${coneja.codigo}</span>
+                            <span>${coneja.edad}</span> <!-- Updated data -->
+                            <span>${coneja.sexo}</span>
+                            <span>${new Date(coneja.fechaMonta).toLocaleDateString('es-ES')}</span>
+                            <span>${new Date(coneja.fechaParto).toLocaleDateString('es-ES')}</span>
+                            <span><button class="btn btn-danger" onclick="confirmarEliminarParto('${coneja.codigo}')">Eliminar</button></span>
+                        `;
+                        resultados.appendChild(item);
+                    }
+                });
+            } else {
+                let raza = document.getElementById("buscarRazaEliminar").value.toLowerCase();
+                if (raza === "") {
+                    errorBusquedaRazaEliminar.textContent = "";
+                    mostrarTablaConejas();
+                    return;
+                }
+
+                let conejaEncontrada = conejas.filter(coneja => coneja.raza.toLowerCase() === raza);
+
+                if (conejaEncontrada.length === 0) {
+                    errorBusquedaRazaEliminar.textContent = "No se encontró ninguna coneja con esa raza.";
+                    return;
+                }
+
+                errorBusquedaRazaEliminar.textContent = ""; // Clear error message if valid input is entered
+
+                conejaEncontrada.forEach(coneja => {
+                    if (coneja.fechaMonta && coneja.fechaParto) {
+                        let item = document.createElement("div");
+                        item.className = "list-group-item list-group-item-action";
+                        item.innerHTML = `
+                            <span>${coneja.jaula}</span>
+                            <span>${coneja.codigo}</span>
+                            <span>${coneja.edad}</span> <!-- Updated data -->
+                            <span>${coneja.sexo}</span>
+                            <span>${new Date(coneja.fechaMonta).toLocaleDateString('es-ES')}</span>
+                            <span>${new Date(coneja.fechaParto).toLocaleDateString('es-ES')}</span>
+                            <span><button class="btn btn-danger" onclick="confirmarEliminarParto('${coneja.codigo}')">Eliminar</button></span>
+                        `;
+                        resultados.appendChild(item);
+                    }
+                });
+            }
+        }
+
+        function cambiarTipoBusqueda() {
+            let tipoBusqueda = document.getElementById("buscarTipo").value;
+            let buscarCodigoDiv = document.getElementById("buscarCodigoDiv");
+            let buscarRazaDiv = document.getElementById("buscarRazaDiv");
+
+            if (tipoBusqueda === "codigo") {
+                buscarCodigoDiv.style.display = "block";
+                buscarRazaDiv.style.display = "none";
+            } else {
+                buscarCodigoDiv.style.display = "none";
+                buscarRazaDiv.style.display = "block";
+            }
+        }
+
+        function cambiarTipoBusquedaEliminar() {
+            let tipoBusqueda = document.getElementById("buscarTipoEliminar").value;
+            let buscarCodigoDiv = document.getElementById("buscarCodigoDivEliminar");
+            let buscarRazaDiv = document.getElementById("buscarRazaDivEliminar");
+
+            if (tipoBusqueda === "codigo") {
+                buscarCodigoDiv.style.display = "block";
+                buscarRazaDiv.style.display = "none";
+            } else {
+                buscarCodigoDiv.style.display = "none";
+                buscarRazaDiv.style.display = "block";
+            }
+        }
+
+        window.onload = mostrarFormulario;
+    </script>
+</body>
+</html>

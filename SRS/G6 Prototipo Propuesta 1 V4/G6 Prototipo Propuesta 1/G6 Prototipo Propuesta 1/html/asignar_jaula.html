@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asignar Jaula a Conejo</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        .navbar {
+            background-color: #7b4e9b;
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 20px;
+        }
+        .navbar-brand, .nav-link {
+            font-size: 20px;
+            color: #fff;
+        }
+        .container-fluid {
+            display: flex;
+            min-height: 100vh;
+            padding: 0;
+        }
+        .sidebar {
+            background-color: #7b4e9b;
+            width: 250px;
+            padding: 20px;
+            border-right: 2px solid #ddd;
+        }
+        .sidebar .btn {
+            width: 100%;
+            margin-bottom: 10px;
+            background-color: #9b6fb0;
+            color: white;
+            font-size: 18px;
+            border: none;
+        }
+        .sidebar .btn:hover {
+            background-color: #7b4e9b;
+        }
+        .main-content {
+            flex-grow: 1;
+            padding: 20px;
+        }
+        .error {
+            color: red;
+            font-size: 14px;
+        }
+        .search-table {
+            margin-top: 20px;
+        }
+        .search-error {
+            color: red;
+            margin-top: 10px;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgb(0,0,0);
+            background-color: rgba(0,0,0,0.4);
+            padding-top: 60px;
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 50%;
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .list-group-item {
+            display: flex;
+            justify-content: space-between;
+        }
+        .list-group-item span {
+            flex: 1;
+            text-align: center;
+        }
+        .list-group-item span.label {
+            color: white;
+            font-weight: bold;
+        }
+        .list-group-item.header {
+            background-color: black;
+            color: white;
+        }
+        .active {
+            background-color: rgba(0, 123, 255, 0.1) !important; /* Transparent blue */
+            border-color: rgba(0, 123, 255, 0.1) !important; /* Transparent blue */
+            color: black !important; /* Ensure text color remains black */
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div></div>
+    </nav>
+    <div class="container-fluid">
+        <div class="sidebar">
+            <button class="btn btn-regresar" onclick="window.location.href='crianza.html'">← Regresar</button>
+        </div>
+        <div class="main-content">
+            <h1>Asignar Jaula a Conejo</h1>
+            <h2>Jaulas</h2>
+            <div class="form-group">
+                <label for="buscarJaula">Buscar Jaula</label>
+                <input type="number" id="buscarJaula" class="form-control" oninput="buscarJaula()" placeholder="Ingrese número de jaula">
+                <small id="errorBusquedaJaula" class="search-error"></small>
+            </div>
+            <div id="jaulaList" class="list-group">
+                <div class="list-group-item header">
+                    <span class="label">Número de Jaula</span>
+                    <span class="label">Tipo</span>
+                    <span class="label">Capacidad</span>
+                </div>
+                <!-- Jaulas serán cargadas aquí -->
+            </div>
+            <h2 class="mt-4">Conejos</h2>
+            <div class="form-group">
+                <label for="buscarTipo">Buscar por</label>
+                <select id="buscarTipo" class="form-control" onchange="cambiarTipoBusqueda()">
+                    <option value="codigo">Código</option>
+                    <option value="raza">Raza</option>
+                </select>
+            </div>
+            <div class="form-group" id="buscarCodigoDiv">
+                <label for="buscarCodigo">Buscar por Código</label>
+                <input type="text" id="buscarCodigo" class="form-control" oninput="buscarConejo()" placeholder="Ingrese código del conejo">
+                <small id="errorBusqueda" class="search-error"></small>
+            </div>
+            <div class="form-group" id="buscarRazaDiv" style="display: none;">
+                <label for="buscarRaza">Buscar por Raza</label>
+                <input type="text" id="buscarRaza" class="form-control" oninput="buscarConejo()" placeholder="Ingrese raza del conejo">
+                <small id="errorBusquedaRaza" class="search-error"></small>
+            </div>
+            <div id="conejoList" class="list-group">
+                <div class="list-group-item header">
+                    <span class="label">Código</span>
+                    <span class="label">Sexo</span>
+                    <span class="label">Edad (meses)</span> <!-- Updated header -->
+                    <span class="label">Propósito</span>
+                </div>
+                <!-- Conejos serán cargados aquí -->
+            </div>
+            <small class="error" id="errorConejo"></small>
+            <button class="btn btn-primary" onclick="asignarJaula()">Asignar</button>
+            <div id="mensajeExito" class="alert alert-success mt-3" style="display:none;"></div>
+            <div id="mensajeError" class="alert alert-danger mt-3" style="display:none;"></div>
+            <h2 class="mt-5">Jaulas Asignadas</h2>
+            <table class="table table-striped search-table">
+                <thead>
+                    <tr>
+                        <th>Número de Jaula</th>
+                        <th>Código de Conejos</th>
+                    </tr>
+                </thead>
+                <tbody id="jaulasAsignadas"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="errorModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeErrorModal()">&times;</span>
+            <p id="errorMessage"></p>
+        </div>
+    </div>
+    <div id="successModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeSuccessModal()">&times;</span>
+            <p id="successMessage"></p>
+        </div>
+    </div>
+    <div id="confirmModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeConfirmModal()">&times;</span>
+            <p>¿Está seguro de que desea asignar esta jaula a los conejos seleccionados?</p>
+            <button id="confirmAssign" class="btn btn-primary">Asignar</button>
+            <button class="btn btn-secondary" onclick="closeConfirmModal()">Cancelar</button>
+        </div>
+    </div>
+
+    <script>
+        let jaulas = [
+            { numero: 1, tipo: "engorde", capacidad: 5 },
+            { numero: 2, tipo: "reproduccion", capacidad: 1 },
+            { numero: 3, tipo: "crianza", capacidad: 6 }
+        ];
+
+        let conejos = [
+            { raza: "rex", codigo: "R001", sexo: "macho", edad: 6, peso: 2.5, proposito: "engorde" },
+            { raza: "danes", codigo: "D002", sexo: "hembra", edad: 8, peso: 3.0, proposito: "reproduccion" },
+            { raza: "leon", codigo: "L003", sexo: "macho", edad: 4, peso: 1.8, proposito: "engorde" }
+        ];
+
+        let asignaciones = [];
+        let jaulaSeleccionada = null;
+        let conejosSeleccionados = [];
+
+        function cargarDatos() {
+            actualizarListaJaulas();
+            actualizarListaConejos();
+            mostrarAsignaciones();
+        }
+
+        function actualizarListaJaulas() {
+            let jaulaList = document.getElementById("jaulaList");
+            jaulaList.innerHTML = `
+                <div class="list-group-item header">
+                    <span class="label">Número de Jaula</span>
+                    <span class="label">Tipo</span>
+                    <span class="label">Capacidad</span>
+                </div>
+            `;
+
+            jaulas.forEach(jaula => {
+                if (!asignaciones.some(asignacion => asignacion.jaula == jaula.numero)) {
+                    let item = document.createElement("button");
+                    item.className = "list-group-item list-group-item-action";
+                    item.innerHTML = `<span>${jaula.numero}</span><span>${jaula.tipo}</span><span>${jaula.capacidad}</span>`;
+                    item.onclick = () => seleccionarJaula(jaula.numero);
+                    jaulaList.appendChild(item);
+                }
+            });
+        }
+
+        function seleccionarJaula(numero) {
+            jaulaSeleccionada = numero;
+            let items = document.querySelectorAll("#jaulaList .list-group-item");
+            items.forEach(item => item.classList.remove("active"));
+            let selectedItem = Array.from(items).find(item => item.textContent.includes(numero));
+            if (selectedItem) {
+                selectedItem.classList.add("active");
+            }
+        }
+
+        function actualizarListaConejos() {
+            let conejoList = document.getElementById("conejoList");
+            conejoList.innerHTML = `
+                <div class="list-group-item header">
+                    <span class="label">Código</span>
+                    <span class="label">Sexo</span>
+                    <span class="label">Edad (meses)</span> <!-- Updated header -->
+                    <span class="label">Propósito</span>
+                </div>
+            `;
+
+            conejos.forEach(conejo => {
+                if (conejo.edad >= 4 && !asignaciones.some(asignacion => asignacion.conejos.includes(conejo.codigo))) {
+                    let item = document.createElement("button");
+                    item.className = "list-group-item list-group-item-action";
+                    item.innerHTML = `<span>${conejo.codigo}</span><span>${conejo.sexo}</span><span>${conejo.edad}</span><span>${conejo.proposito}</span>`;
+                    item.onclick = () => seleccionarConejo(conejo.codigo);
+                    conejoList.appendChild(item);
+                }
+            });
+        }
+
+        function seleccionarConejo(codigo) {
+            let index = conejosSeleccionados.indexOf(codigo);
+            if (index === -1) {
+                conejosSeleccionados.push(codigo);
+            } else {
+                conejosSeleccionados.splice(index, 1);
+            }
+            let items = document.querySelectorAll("#conejoList .list-group-item");
+            items.forEach(item => item.classList.remove("active"));
+            conejosSeleccionados.forEach(codigo => {
+                let selectedItem = Array.from(items).find(item => item.textContent.includes(codigo));
+                if (selectedItem) {
+                    selectedItem.classList.add("active");
+                }
+            });
+        }
+
+        function mostrarAsignaciones() {
+            let jaulasAsignadas = document.getElementById("jaulasAsignadas");
+            jaulasAsignadas.innerHTML = "";
+
+            asignaciones.forEach(asignacion => {
+                let row = `<tr>
+                            <td>${asignacion.jaula}</td>
+                            <td>${asignacion.conejos.join("<br>")}</td>
+                        </tr>`;
+                jaulasAsignadas.innerHTML += row;
+            });
+        }
+
+        function asignarJaula() {
+            let errorMessage = document.getElementById("errorMessage");
+            let successMessage = document.getElementById("successMessage");
+
+            if (!jaulaSeleccionada) {
+                errorMessage.textContent = "Debe seleccionar una jaula.";
+                document.getElementById("errorModal").style.display = "block";
+                return;
+            }
+
+            if (conejosSeleccionados.length === 0) {
+                errorMessage.textContent = "Debe seleccionar al menos un conejo.";
+                document.getElementById("errorModal").style.display = "block";
+                return;
+            }
+
+            let jaula = jaulas.find(j => j.numero == jaulaSeleccionada);
+            if (conejosSeleccionados.length > jaula.capacidad) {
+                errorMessage.textContent = `La capacidad de la jaula es ${jaula.capacidad}. Debe reducir los conejos seleccionados.`;
+                document.getElementById("errorModal").style.display = "block";
+                return;
+            }
+
+            document.getElementById("confirmModal").style.display = "block";
+        }
+
+        document.getElementById("confirmAssign").addEventListener("click", function() {
+            let successMessage = document.getElementById("successMessage");
+            asignaciones.push({ jaula: jaulaSeleccionada, conejos: conejosSeleccionados });
+            successMessage.textContent = "Jaula asignada con éxito.";
+            document.getElementById("successModal").style.display = "block";
+            conejosSeleccionados = [];
+            actualizarListaJaulas();
+            actualizarListaConejos();
+            mostrarAsignaciones();
+            closeConfirmModal();
+        });
+
+        function closeErrorModal() {
+            document.getElementById("errorModal").style.display = "none";
+        }
+
+        function closeSuccessModal() {
+            document.getElementById("successModal").style.display = "none";
+        }
+
+        function closeConfirmModal() {
+            document.getElementById("confirmModal").style.display = "none";
+        }
+
+        function cambiarTipoBusqueda() {
+            let tipoBusqueda = document.getElementById("buscarTipo").value;
+            if (tipoBusqueda === "codigo") {
+                document.getElementById("buscarCodigoDiv").style.display = "block";
+                document.getElementById("buscarRazaDiv").style.display = "none";
+            } else {
+                document.getElementById("buscarCodigoDiv").style.display = "none";
+                document.getElementById("buscarRazaDiv").style.display = "block";
+            }
+        }
+
+        function buscarJaula() {
+            let buscarJaula = document.getElementById("buscarJaula").value.toLowerCase();
+            let jaulaList = document.getElementById("jaulaList");
+            jaulaList.innerHTML = `
+                <div class="list-group-item header">
+                    <span class="label">Número de Jaula</span>
+                    <span class="label">Tipo</span>
+                    <span class="label">Capacidad</span>
+                </div>
+            `;
+
+            if (buscarJaula === "") {
+                actualizarListaJaulas();
+                return;
+            }
+
+            if (isNaN(buscarJaula)) {
+                document.getElementById("errorBusquedaJaula").textContent = "El número de jaula debe ser un número.";
+                return;
+            } else {
+                document.getElementById("errorBusquedaJaula").textContent = "";
+            }
+
+            jaulas.forEach(jaula => {
+                if (!asignaciones.some(asignacion => asignacion.jaula == jaula.numero) && jaula.numero.toString().includes(buscarJaula)) {
+                    let item = document.createElement("button");
+                    item.className = "list-group-item list-group-item-action";
+                    item.innerHTML = `<span>${jaula.numero}</span><span>${jaula.tipo}</span><span>${jaula.capacidad}</span>`;
+                    item.onclick = () => seleccionarJaula(jaula.numero);
+                    jaulaList.appendChild(item);
+                }
+            });
+        }
+
+        function buscarConejo() {
+            let tipoBusqueda = document.getElementById("buscarTipo").value;
+            let errorBusqueda = document.getElementById("errorBusqueda");
+            let errorBusquedaRaza = document.getElementById("errorBusquedaRaza");
+            let conejoList = document.getElementById("conejoList");
+            conejoList.innerHTML = `
+                <div class="list-group-item header">
+                    <span class="label">Código</span>
+                    <span class="label">Sexo</span>
+                    <span class="label">Edad (meses)</span> <!-- Updated header -->
+                    <span class="label">Propósito</span>
+                </div>
+            `;
+
+            if (tipoBusqueda === "codigo") {
+                let codigo = document.getElementById("buscarCodigo").value.toLowerCase();
+                if (codigo === "") {
+                    errorBusqueda.textContent = "";
+                    actualizarListaConejos();
+                    return;
+                }
+
+                let regex = /^[rdl]\d{3}$/i;
+                if (!regex.test(codigo)) {
+                    errorBusqueda.textContent = "El formato del código es incorrecto. Debe ser la primera letra de la raza seleccionada y una numeración secuencial de 3 dígitos.";
+                    return;
+                }
+
+                let conejoEncontrado = conejos.filter(conejo => conejo.codigo.toLowerCase() === codigo);
+
+                if (conejoEncontrado.length === 0) {
+                    errorBusqueda.textContent = "No se encontró ningún conejo con ese código.";
+                    return;
+                }
+
+                errorBusqueda.textContent = ""; // Clear error message if valid input is entered
+
+                conejoEncontrado.forEach(conejo => {
+                    if (conejo.edad >= 4 && !asignaciones.some(asignacion => asignacion.conejos.includes(conejo.codigo))) {
+                        let item = document.createElement("button");
+                        item.className = "list-group-item list-group-item-action";
+                        item.innerHTML = `<span>${conejo.codigo}</span><span>${conejo.sexo}</span><span>${conejo.edad}</span><span>${conejo.proposito}</span>`;
+                        item.onclick = () => seleccionarConejo(conejo.codigo);
+                        conejoList.appendChild(item);
+                    }
+                });
+            } else {
+                let raza = document.getElementById("buscarRaza").value.toLowerCase();
+                if (raza === "") {
+                    errorBusquedaRaza.textContent = "Para iniciar la búsqueda, ingrese una raza.";
+                    actualizarListaConejos();
+                    return;
+                }
+
+                let regex = /^[a-zA-Z]+$/;
+                if (!regex.test(raza)) {
+                    errorBusquedaRaza.textContent = "El nombre de la raza solo debe contener letras.";
+                    return;
+                }
+
+                let conejoEncontrado = conejos.filter(conejo => conejo.raza.toLowerCase().includes(raza));
+
+                if (conejoEncontrado.length === 0) {
+                    errorBusquedaRaza.textContent = "No se encontró ningún conejo con esa raza.";
+                    return;
+                }
+
+                errorBusquedaRaza.textContent = ""; // Clear error message if valid input is entered
+
+                conejoEncontrado.forEach(conejo => {
+                    if (conejo.edad >= 4 && !asignaciones.some(asignacion => asignacion.conejos.includes(conejo.codigo))) {
+                        let item = document.createElement("button");
+                        item.className = "list-group-item list-group-item-action";
+                        item.innerHTML = `<span>${conejo.codigo}</span><span>${conejo.sexo}</span><span>${conejo.edad}</span><span>${conejo.proposito}</span>`;
+                        item.onclick = () => seleccionarConejo(conejo.codigo);
+                        conejoList.appendChild(item);
+                    }
+                });
+            }
+        }
+
+        window.onload = cargarDatos;
+    </script>
+</body>
+</html>

@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestionar Jaulas</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        .navbar {
+            background-color: #7b4e9b;
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 20px;
+        }
+        .navbar-brand, .nav-link {
+            font-size: 20px;
+            color: #fff;
+        }
+        .container-fluid {
+            display: flex;
+            min-height: 100vh;
+            padding: 0;
+        }
+        .sidebar {
+            background-color: #7b4e9b;
+            width: 250px;
+            padding: 20px;
+            border-right: 2px solid #ddd;
+        }
+        .sidebar .btn {
+            width: 100%;
+            margin-bottom: 10px;
+            background-color: #9b6fb0;
+            color: white;
+            font-size: 18px;
+            border: none;
+        }
+        .sidebar .btn:hover {
+            background-color: #7b4e9b;
+        }
+        .main-content {
+            flex-grow: 1;
+            padding: 20px;
+        }
+        .error {
+            color: red;
+            font-size: 14px;
+        }
+        #formJaula {
+            display: none;
+        }
+        .search-table {
+            margin-top: 20px;
+        }
+        .search-error {
+            color: red;
+            margin-top: 10px;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgb(0,0,0);
+            background-color: rgba(0,0,0,0.4);
+            padding-top: 60px;
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 50%;
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .active {
+            background-color: rgba(0, 123, 255, 0.1) !important; /* Transparent blue */
+            border-color: rgba(0, 123, 255, 0.1) !important; /* Transparent blue */
+            color: black !important; /* Ensure text color remains black */
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div></div>
+    </nav>
+    <div class="container-fluid">
+        <div class="sidebar">
+            <button class="btn" onclick="mostrarFormulario('registrar')">Registrar Jaula</button>
+            <button class="btn" onclick="mostrarFormulario('editar')">Editar Jaula</button>
+            <button class="btn" onclick="mostrarFormulario('eliminar')">Eliminar Jaula</button>
+            <button class="btn btn-regresar" onclick="window.location.href='crianza.html'">← Regresar</button>
+        </div>
+        <div class="main-content">
+            
+            <!-- Formulario de Registrar/Editar Jaula -->
+            <form id="formJaula">
+                <h1 id="tituloFormulario">Registrar Jaula</h1>
+                <div class="form-group">
+                    <label for="numeroJaula">Número de Jaula</label>
+                    <input type="number" id="numeroJaula" class="form-control" required>
+                    <small class="error" id="errorNumero"></small>
+                </div>
+                <div class="form-group">
+                    <label for="tipoJaula">Tipo de Jaula</label>
+                    <select id="tipoJaula" class="form-control" required>
+                        <option value="">Seleccione...</option>
+                        <option value="engorde">Engorde</option>
+                        <option value="reproduccion">Reproducción</option>
+                        <option value="crianza">Crianza</option>
+                    </select>
+                    <small class="error" id="errorTipo"></small>
+                </div>
+                <div class="form-group">
+                    <label for="capacidad">Capacidad</label>
+                    <input type="number" id="capacidad" class="form-control" required>
+                    <small class="error" id="errorCapacidad"></small>
+                </div>
+                <button type="submit" class="btn btn-primary" id="btnSubmit">Registrar</button>
+            </form>
+            
+            <!-- Formulario de Edición -->
+            <div id="editarJaula" style="display: none;">
+                <h1>Editar Jaula</h1>
+                <!-- Campo de Búsqueda -->
+                <div class="form-group">
+                    <label for="buscarNumero">Buscar por Número de Jaula</label>
+                    <input type="number" id="buscarNumero" class="form-control" oninput="buscarJaula('editar')" placeholder="Ingrese número de jaula">
+                    <small id="errorBusqueda" class="search-error"></small>
+                </div>
+                <!-- Tabla de Resultados de Búsqueda -->
+                <table class="table table-striped search-table" id="tablaResultados" style="display: none;">
+                    <thead>
+                        <tr>
+                            <th>Número de Jaula</th>
+                            <th>Tipo</th>
+                            <th>Capacidad</th>
+                            <th>Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="resultados"></tbody>
+                </table>
+            </div>
+
+            <div id="mensajeExito" class="alert alert-success mt-3" style="display:none;"></div>
+        </div>
+    </div>
+
+    <div id="deleteModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <p>¿Está seguro de que desea eliminar esta jaula?</p>
+            <button id="confirmDelete" class="btn btn-danger">Eliminar</button>
+            <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+        </div>
+    </div>
+
+    <script>
+        let jaulas = [
+            { numero: 1, tipo: "engorde", capacidad: 5 },
+            { numero: 2, tipo: "reproduccion", capacidad: 1 },
+            { numero: 3, tipo: "crianza", capacidad: 6 }
+        ];
+
+        function mostrarFormulario(accion) {
+            let form = document.getElementById("formJaula");
+            let titulo = document.getElementById("tituloFormulario");
+            let btnSubmit = document.getElementById("btnSubmit");
+            let mensajeExito = document.getElementById("mensajeExito");
+            let editarJaula = document.getElementById("editarJaula");
+
+            // Reiniciar mensajes y errores
+            mensajeExito.style.display = "none";
+            document.getElementById("errorNumero").textContent = "";
+            document.getElementById("errorTipo").textContent = "";
+            document.getElementById("errorCapacidad").textContent = "";
+            document.getElementById("errorBusqueda").textContent = "";
+
+            if (accion === "registrar") {
+                titulo.textContent = "Registrar Jaula";
+                btnSubmit.textContent = "Registrar";
+                btnSubmit.style.display = "block";
+                form.style.display = "block";
+                editarJaula.style.display = "none";
+            } else if (accion === "editar") {
+                titulo.textContent = "Editar Jaula";
+                btnSubmit.textContent = "Guardar Cambios";
+                btnSubmit.style.display = "block";
+                form.style.display = "none";
+                editarJaula.style.display = "block";
+                mostrarTablaJaulas('editar');
+            } else if (accion === "eliminar") {
+                titulo.textContent = "Eliminar Jaula";
+                btnSubmit.style.display = "none";
+                form.style.display = "none";
+                editarJaula.style.display = "block";
+                mostrarTablaJaulas('eliminar');
+            } else {
+                form.style.display = "none";
+            }
+        }
+
+        function mostrarTablaJaulas(accion) {
+            let resultados = document.getElementById("resultados");
+            let tablaResultados = document.getElementById("tablaResultados");
+            resultados.innerHTML = ""; // Limpiar resultados
+
+            jaulas.forEach(jaula => {
+                let row = `<tr>
+                            <td>${jaula.numero}</td>
+                            <td>${jaula.tipo}</td>
+                            <td>${jaula.capacidad}</td>
+                            <td>
+                                ${accion === 'editar' ? `<button class="btn btn-warning" onclick="editarJaulaSeleccionada(${jaula.numero})">Editar</button>` : ''}
+                                ${accion === 'eliminar' ? `<button class="btn btn-danger" onclick="eliminarJaula(${jaula.numero})">Eliminar</button>` : ''}
+                            </td>
+                        </tr>`;
+                resultados.innerHTML += row;
+            });
+            tablaResultados.style.display = "table";
+        }
+
+        function editarJaulaSeleccionada(numero) {
+            let jaulaSeleccionada = jaulas.find(jaula => jaula.numero === numero);
+            if (jaulaSeleccionada) {
+                document.getElementById("numeroJaula").value = jaulaSeleccionada.numero;
+                document.getElementById("numeroJaula").disabled = true;
+                document.getElementById("tipoJaula").value = jaulaSeleccionada.tipo;
+                document.getElementById("capacidad").value = jaulaSeleccionada.capacidad;
+                document.getElementById("tituloFormulario").textContent = "Editar Jaula";
+                document.getElementById("btnSubmit").textContent = "Guardar Cambios";
+                document.getElementById("formJaula").style.display = "block";
+                document.getElementById("editarJaula").style.display = "none";
+            }
+        }
+
+        let jaulaAEliminar = null;
+
+        function eliminarJaula(numero) {
+            jaulaAEliminar = numero;
+            document.getElementById("deleteModal").style.display = "block";
+        }
+
+        document.getElementById("confirmDelete").addEventListener("click", function() {
+            if (jaulaAEliminar !== null) {
+                jaulas = jaulas.filter(jaula => jaula.numero !== jaulaAEliminar);
+                document.getElementById("mensajeExito").textContent = "Jaula eliminada con éxito.";
+                document.getElementById("mensajeExito").style.display = "block";
+                mostrarTablaJaulas('eliminar');
+                closeModal();
+            }
+        });
+
+        function closeModal() {
+            document.getElementById("deleteModal").style.display = "none";
+            jaulaAEliminar = null;
+        }
+
+        function buscarJaula(accion) {
+            let numero = document.getElementById("buscarNumero").value;
+            let errorBusqueda = document.getElementById("errorBusqueda");
+            let resultados = document.getElementById("resultados");
+            let tablaResultados = document.getElementById("tablaResultados");
+
+            // Limpiar resultados previos
+            resultados.innerHTML = "";
+            tablaResultados.style.display = "none";
+            errorBusqueda.textContent = "";
+
+            if (numero === "") {
+                errorBusqueda.textContent = "";
+                mostrarTablaJaulas(accion);
+                return;
+            }
+
+            if (isNaN(numero) || numero <= 0) {
+                errorBusqueda.textContent = "Por favor, ingrese un número entero positivo.";
+                return;
+            }
+
+            let jaulaEncontrada = jaulas.filter(jaula => jaula.numero == numero);
+
+            if (jaulaEncontrada.length === 0) {
+                errorBusqueda.textContent = "No se encontró ninguna jaula con ese número.";
+                return;
+            }
+
+            jaulaEncontrada.forEach(jaula => {
+                let row = `<tr>
+                            <td>${jaula.numero}</td>
+                            <td>${jaula.tipo}</td>
+                            <td>${jaula.capacidad}</td>
+                            <td>
+                                ${accion === 'editar' ? `<button class="btn btn-warning" onclick="editarJaulaSeleccionada(${jaula.numero})">Editar</button>` : ''}
+                                ${accion === 'eliminar' ? `<button class="btn btn-danger" onclick="eliminarJaula(${jaula.numero})">Eliminar</button>` : ''}
+                            </td>
+                        </tr>`;
+                resultados.innerHTML += row;
+            });
+            tablaResultados.style.display = "table";
+        }
+
+        document.getElementById("formJaula").addEventListener("submit", function(event) {
+            event.preventDefault();
+            let numero = document.getElementById("numeroJaula").value;
+            let tipo = document.getElementById("tipoJaula").value;
+            let capacidad = document.getElementById("capacidad").value;
+            let mensajeExito = document.getElementById("mensajeExito");
+
+            // Reiniciar mensajes de error
+            document.getElementById("errorNumero").textContent = "";
+            document.getElementById("errorTipo").textContent = "";
+            document.getElementById("errorCapacidad").textContent = "";
+
+            // Validar
+            if (!tipo || !capacidad) {
+                if (!tipo) document.getElementById("errorTipo").textContent = "El tipo de jaula es obligatorio.";
+                if (!capacidad) document.getElementById("errorCapacidad").textContent = "La capacidad es obligatoria.";
+                return;
+            }
+
+            if (isNaN(capacidad) || capacidad <= 0) {
+                document.getElementById("errorCapacidad").textContent = "La capacidad debe ser un número entero positivo.";
+                return;
+            }
+
+            if ((tipo === "reproduccion" && capacidad > 1) || ((tipo === "crianza" || tipo === "engorde") && capacidad > 6)) {
+                document.getElementById("errorCapacidad").textContent = `La capacidad máxima para ${tipo} es ${tipo === "reproduccion" ? 1 : 6}.`;
+                return;
+            }
+
+            if (document.getElementById("btnSubmit").textContent === "Guardar Cambios") {
+                // Modificar Jaula
+                let jaulaSeleccionada = jaulas.find(jaula => jaula.numero === parseInt(numero));
+                jaulaSeleccionada.tipo = tipo;
+                jaulaSeleccionada.capacidad = capacidad;
+                mensajeExito.textContent = "Jaula modificada con éxito.";
+            } else {
+                // Crear Nueva Jaula
+                let jaulaExistente = jaulas.find(jaula => jaula.numero === parseInt(numero));
+                if (jaulaExistente) {
+                    document.getElementById("errorNumero").textContent = "El número de jaula ya existe.";
+                    return;
+                }
+                jaulas.push({ numero: parseInt(numero), tipo, capacidad });
+                mensajeExito.textContent = "Jaula registrada con éxito.";
+            }
+            mensajeExito.style.display = "block";
+            document.getElementById("formJaula").style.display = "none";
+            mostrarTablaJaulas('editar'); // Recargar tabla
+        });
+    </script>
+</body>
+</html>

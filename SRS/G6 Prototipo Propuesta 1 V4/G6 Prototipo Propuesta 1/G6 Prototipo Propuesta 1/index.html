@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: url('img/conejito-0g8mij2ea0et2gs4.jpg') no-repeat center center/cover;
+            position: relative;
+        }
+        body::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.4); /* Oscurecer fondo para no cansar la vista */
+        }
+        .login-container {
+            position: relative;
+            z-index: 2;
+            background: #D8BFD8; /* Morado claro */
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
+            text-align: center;
+        }
+        .bunny-icon {
+            width: 90px;
+            height: 90px;
+            margin: -60px auto 15px;
+        }
+        .error-message {
+            color: red;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body class="d-flex justify-content-center align-items-center vh-100">
+    <div class="login-container w-25">
+        <img src="img/conejito.png" alt="Conejo" class="bunny-icon">
+        <h3 class="mb-4 text-white">Iniciar Sesión</h3>
+        <form id="loginForm">
+            <div class="mb-3 text-start">
+                <label for="usuario" class="form-label text-white">Usuario</label>
+                <input type="text" class="form-control" id="usuario">
+            </div>
+            <div class="mb-3 text-start">
+                <label for="password" class="form-label text-white">Contraseña</label>
+                <div class="input-group">
+                    <input type="password" class="form-control" id="password">
+                    <button class="btn btn-outline-secondary" type="button" onclick="togglePassword()">👁️</button>
+                </div>
+            </div>
+            <div id="errorMessage" class="error-message"></div>
+            <button type="submit" class="btn btn-primary w-100">Iniciar Sesión</button>
+        </form>
+    </div>
+
+    <!-- Modal for welcome message -->
+    <div class="modal fade" id="welcomeModal" tabindex="-1" aria-labelledby="welcomeModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="welcomeModalLabel">Bienvenido</h5>
+                </div>
+                <div class="modal-body" id="welcomeMessage"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"></script>
+    <script>
+        let failedAttempts = 0;
+
+        function togglePassword() {
+            let passwordInput = document.getElementById('password');
+            passwordInput.type = passwordInput.type === 'password' ? 'text' : 'password';
+        }
+
+        document.getElementById('loginForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            const username = document.getElementById('usuario').value;
+            const password = document.getElementById('password').value;
+            const errorMessage = document.getElementById('errorMessage');
+
+            if (!username || !password) {
+                errorMessage.textContent = 'Debe ingresar el usuario y contraseña.';
+                return;
+            }
+
+            if (username === 'maria' && password === '1234') {
+                // Mostrar mensaje de bienvenida en el modal
+                const welcomeMessage = document.getElementById('welcomeMessage');
+                welcomeMessage.textContent = 'Bienvenido, ' + username + '!';
+
+                // Mostrar el modal
+                const welcomeModal = new bootstrap.Modal(document.getElementById('welcomeModal'));
+                welcomeModal.show();
+
+                // Redirigir a pantalla1 después de 2 segundos para que el mensaje se vea
+                setTimeout(function() {
+                    window.location.href = 'html/pantalla1.html';
+                }, 2000);
+            } else {
+                failedAttempts++;
+                if (failedAttempts > 4) {
+                    errorMessage.textContent = 'No tendrá acceso hasta dentro de 24 horas.';
+                } else {
+                    errorMessage.textContent = 'Usuario o contraseña ingresado no se encuentran registrados.';
+                }
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestionar Razas</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        .navbar {
+            background-color: #7b4e9b;
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 20px;
+        }
+        .navbar-brand, .nav-link {
+            font-size: 20px;
+            color: #fff;
+        }
+        .container-fluid {
+            display: flex;
+            min-height: 100vh;
+            padding: 0;
+        }
+        .sidebar {
+            background-color: #7b4e9b;
+            width: 250px;
+            padding: 20px;
+            border-right: 2px solid #ddd;
+        }
+        .sidebar .btn {
+            width: 100%;
+            margin-bottom: 10px;
+            background-color: #9b6fb0;
+            color: white;
+            font-size: 18px;
+            border: none;
+        }
+        .sidebar .btn:hover {
+            background-color: #7b4e9b;
+        }
+        .main-content {
+            flex-grow: 1;
+            padding: 20px;
+        }
+        .error {
+            color: red;
+            font-size: 14px;
+        }
+        #formRegistrarRaza, #formEditarRaza {
+            display: none;
+        }
+        .search-table {
+            margin-top: 20px;
+        }
+        .search-error {
+            color: red;
+            margin-top: 10px;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgb(0,0,0);
+            background-color: rgba(0,0,0,0.4);
+            padding-top: 60px;
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 50%;
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .invalid {
+            border-color: red;
+        }
+        .active {
+            background-color: rgba(0, 123, 255, 0.1) !important; /* Transparent blue */
+            border-color: rgba(0, 123, 255, 0.1) !important; /* Transparent blue */
+            color: black !important; /* Ensure text color remains black */
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div></div>
+    </nav>
+    <div class="container-fluid">
+        <div class="sidebar">
+            <button class="btn" onclick="mostrarFormulario('registrar')">Registrar Raza</button>
+            <button class="btn" onclick="mostrarFormulario('editar')">Editar Raza</button>
+            <button class="btn" onclick="mostrarFormulario('eliminar')">Eliminar Raza</button>
+            <button class="btn btn-regresar" onclick="window.location.href='crianza.html'">← Regresar</button>
+        </div>
+        <div class="main-content">
+            
+            <!-- Formulario de Registrar Raza -->
+            <form id="formRegistrarRaza">
+                <h1>Registrar Raza</h1>
+                <div class="form-group">
+                    <label for="nombreRazaRegistrar">Nombre de la Raza</label>
+                    <input type="text" id="nombreRazaRegistrar" class="form-control" required>
+                    <small class="error" id="errorNombreRegistrar"></small>
+                </div>
+                <div class="form-group">
+                    <label for="descripcionRazaRegistrar">Descripción de la Raza</label>
+                    <textarea id="descripcionRazaRegistrar" class="form-control" maxlength="150" required pattern="[a-zA-Z\sáéíóúÁÉÍÓÚ]+"></textarea>
+                    <small class="error" id="errorDescripcionRegistrar"></small>
+                </div>
+                <button type="submit" class="btn btn-primary">Registrar</button>
+            </form>
+            
+            <!-- Formulario de Edición -->
+            <div id="editarRaza" style="display: none;">
+                <h1>Editar Raza</h1>
+                <!-- Tabla de Resultados de Búsqueda -->
+                <table class="table table-striped search-table" id="tablaResultados" style="display: none;">
+                    <thead>
+                        <tr>
+                            <th>Nombre de Raza</th>
+                            <th>Descripción</th>
+                            <th>Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="resultados"></tbody>
+                </table>
+            </div>
+
+            <!-- Formulario de Editar Raza -->
+            <form id="formEditarRaza">
+                <h1>Editar Raza</h1>
+                <div class="form-group">
+                    <label for="nombreRazaEditar">Nombre de la Raza</label>
+                    <input type="text" id="nombreRazaEditar" class="form-control" disabled>
+                    <small class="error" id="errorNombreEditar"></small>
+                </div>
+                <div class="form-group">
+                    <label for="descripcionRazaEditar">Descripción de la Raza</label>
+                    <textarea id="descripcionRazaEditar" class="form-control" maxlength="150" required pattern="[a-zA-Z\sáéíóúÁÉÍÓÚ]+"></textarea>
+                    <small class="error" id="errorDescripcionEditar"></small>
+                </div>
+                <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+            </form>
+
+            <div id="mensajeExito" class="alert alert-success mt-3" style="display:none;"></div>
+        </div>
+    </div>
+
+    <div id="deleteModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <p>¿Está seguro de que desea eliminar esta raza?</p>
+            <button class="btn btn-danger" id="confirmDelete">Eliminar</button>
+            <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+        </div>
+    </div>
+
+    <script>
+        let razas = [
+            { nombre: "Rex", descripcion: "Descripción de Rex" },
+            { nombre: "Leon", descripcion: "Descripción de Leon" },
+            { nombre: "Danes", descripcion: "Descripción de Danes" }
+        ];
+
+        function mostrarFormulario(accion) {
+            let formRegistrar = document.getElementById("formRegistrarRaza");
+            let formEditar = document.getElementById("formEditarRaza");
+            let mensajeExito = document.getElementById("mensajeExito");
+            let editarRaza = document.getElementById("editarRaza");
+
+            // Reiniciar mensajes y errores
+            mensajeExito.style.display = "none";
+            document.getElementById("errorNombreRegistrar").textContent = "";
+            document.getElementById("errorDescripcionRegistrar").textContent = "";
+            document.getElementById("errorNombreEditar").textContent = "";
+            document.getElementById("errorDescripcionEditar").textContent = "";
+
+            if (accion === "registrar") {
+                formRegistrar.style.display = "block";
+                formEditar.style.display = "none";
+                editarRaza.style.display = "none";
+            } else if (accion === "editar") {
+                formRegistrar.style.display = "none";
+                formEditar.style.display = "none";
+                editarRaza.style.display = "block";
+                mostrarTablaRazas('editar');
+            } else if (accion === "eliminar") {
+                formRegistrar.style.display = "none";
+                formEditar.style.display = "none";
+                editarRaza.style.display = "block";
+                mostrarTablaRazas('eliminar');
+            } else {
+                formRegistrar.style.display = "none";
+                formEditar.style.display = "none";
+            }
+        }
+
+        function mostrarTablaRazas(accion) {
+            let resultados = document.getElementById("resultados");
+            let tablaResultados = document.getElementById("tablaResultados");
+            resultados.innerHTML = ""; // Limpiar resultados
+
+            razas.forEach(raza => {
+                let row = `<tr>
+                            <td>${raza.nombre}</td>
+                            <td>${raza.descripcion}</td>
+                            <td>
+                                ${accion === 'editar' ? `<button class="btn btn-warning" onclick="editarRazaSeleccionada('${raza.nombre}')">Editar</button>` : ''}
+                                ${accion === 'eliminar' ? `<button class="btn btn-danger" onclick="confirmarEliminarRaza('${raza.nombre}')">Eliminar</button>` : ''}
+                            </td>
+                        </tr>`;
+                resultados.innerHTML += row;
+            });
+            tablaResultados.style.display = "table";
+        }
+
+        function editarRazaSeleccionada(nombre) {
+            let razaSeleccionada = razas.find(raza => raza.nombre === nombre);
+            if (razaSeleccionada) {
+                document.getElementById("nombreRazaEditar").value = razaSeleccionada.nombre;
+                document.getElementById("descripcionRazaEditar").value = razaSeleccionada.descripcion;
+                document.getElementById("formEditarRaza").style.display = "block";
+                document.getElementById("editarRaza").style.display = "none";
+            }
+        }
+
+        function confirmarEliminarRaza(nombre) {
+            let deleteModal = document.getElementById("deleteModal");
+            deleteModal.style.display = "block";
+            document.getElementById("confirmDelete").onclick = function() {
+                eliminarRaza(nombre);
+                closeModal();
+            };
+        }
+
+        function eliminarRaza(nombre) {
+            razas = razas.filter(raza => raza.nombre !== nombre);
+            mostrarTablaRazas('eliminar');
+            let mensajeExito = document.getElementById("mensajeExito");
+            mensajeExito.textContent = "Raza eliminada con éxito.";
+            mensajeExito.style.display = "block";
+        }
+
+        function closeModal() {
+            document.getElementById("deleteModal").style.display = "none";
+        }
+
+        document.getElementById("formRegistrarRaza").addEventListener("submit", function(event) {
+            event.preventDefault();
+            let nombre = document.getElementById("nombreRazaRegistrar").value;
+            let descripcion = document.getElementById("descripcionRazaRegistrar").value;
+            let mensajeExito = document.getElementById("mensajeExito");
+
+            // Reiniciar mensajes de error y estilos
+            document.getElementById("errorNombreRegistrar").textContent = "";
+            document.getElementById("errorDescripcionRegistrar").textContent = "";
+            document.getElementById("nombreRazaRegistrar").classList.remove("invalid");
+            document.getElementById("descripcionRazaRegistrar").classList.remove("invalid");
+
+            // Validar
+            let valid = true;
+
+            if (!nombre) {
+                document.getElementById("errorNombreRegistrar").textContent = "El nombre es obligatorio.";
+                document.getElementById("nombreRazaRegistrar").classList.add("invalid");
+                valid = false;
+            } else if (!/^[a-zA-Z\sáéíóúÁÉÍÓÚ]+$/.test(nombre)) {
+                document.getElementById("errorNombreRegistrar").textContent = "El nombre solo debe contener letras.";
+                document.getElementById("nombreRazaRegistrar").classList.add("invalid");
+                valid = false;
+            }
+
+            if (!descripcion) {
+                document.getElementById("errorDescripcionRegistrar").textContent = "La descripción es obligatoria.";
+                document.getElementById("descripcionRazaRegistrar").classList.add("invalid");
+                valid = false;
+            } else if (!/^[a-zA-Z\sáéíóúÁÉÍÓÚ]+$/.test(descripcion)) {
+                document.getElementById("errorDescripcionRegistrar").textContent = "La descripción solo debe contener letras.";
+                document.getElementById("descripcionRazaRegistrar").classList.add("invalid");
+                valid = false;
+            } else if (descripcion.length > 150) {
+                document.getElementById("errorDescripcionRegistrar").textContent = "La descripción no debe superar los 150 caracteres.";
+                document.getElementById("descripcionRazaRegistrar").classList.add("invalid");
+                valid = false;
+            }
+
+            if (!valid) {
+                return;
+            }
+
+            // Crear Nueva Raza
+            let razaExistente = razas.find(raza => raza.nombre.toLowerCase() === nombre.toLowerCase());
+            if (razaExistente) {
+                document.getElementById("errorNombreRegistrar").textContent = "El nombre de la raza ya existe.";
+                document.getElementById("nombreRazaRegistrar").classList.add("invalid");
+                return;
+            }
+            razas.push({ nombre, descripcion });
+            mensajeExito.textContent = "Raza registrada con éxito.";
+            mensajeExito.style.display = "block";
+            document.getElementById("formRegistrarRaza").style.display = "none";
+        });
+
+        document.getElementById("formEditarRaza").addEventListener("submit", function(event) {
+            event.preventDefault();
+            let nombre = document.getElementById("nombreRazaEditar").value;
+            let descripcion = document.getElementById("descripcionRazaEditar").value;
+            let mensajeExito = document.getElementById("mensajeExito");
+
+            // Reiniciar mensajes de error y estilos
+            document.getElementById("errorNombreEditar").textContent = "";
+            document.getElementById("errorDescripcionEditar").textContent = "";
+            document.getElementById("descripcionRazaEditar").classList.remove("invalid");
+
+            // Validar
+            let valid = true;
+
+            if (!descripcion) {
+                document.getElementById("errorDescripcionEditar").textContent = "La descripción es obligatoria.";
+                document.getElementById("descripcionRazaEditar").classList.add("invalid");
+                valid = false;
+            } else if (!/^[a-zA-Z\sáéíóúÁÉÍÓÚ]+$/.test(descripcion)) {
+                document.getElementById("errorDescripcionEditar").textContent = "La descripción solo debe contener letras.";
+                document.getElementById("descripcionRazaEditar").classList.add("invalid");
+                valid = false;
+            } else if (descripcion.length > 150) {
+                document.getElementById("errorDescripcionEditar").textContent = "La descripción no debe superar los 150 caracteres.";
+                document.getElementById("descripcionRazaEditar").classList.add("invalid");
+                valid = false;
+            }
+
+            if (!valid) {
+                return;
+            }
+
+            // Modificar Raza
+            let razaSeleccionada = razas.find(raza => raza.nombre === nombre);
+            razaSeleccionada.descripcion = descripcion;
+            mensajeExito.textContent = "Raza modificada con éxito.";
+            mensajeExito.style.display = "block";
+            document.getElementById("formEditarRaza").style.display = "none";
+        });
+    </script>
+</body>
+</html>

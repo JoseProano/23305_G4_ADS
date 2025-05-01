@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generar Reportes</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        .navbar {
+            background-color: #7b4e9b;
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 20px;
+        }
+        .navbar-brand, .nav-link {
+            font-size: 20px;
+            color: #fff;
+        }
+        .container-fluid {
+            display: flex;
+            min-height: 100vh;
+            padding: 0;
+        }
+        .sidebar {
+            background-color: #7b4e9b;
+            width: 250px;
+            padding: 20px;
+            border-right: 2px solid #ddd;
+        }
+        .sidebar .btn {
+            width: 100%;
+            margin-bottom: 10px;
+            background-color: #9b6fb0;
+            color: white;
+            font-size: 18px;
+            border: none;
+        }
+        .sidebar .btn:hover {
+            background-color: #7b4e9b;
+        }
+        .main-content {
+            flex-grow: 1;
+            padding: 20px;
+        }
+        .btn-regresar {
+            background-color: #6c757d;
+            color: white;
+            font-size: 18px;
+            border: none;
+            width: 100%;
+            margin-top: 20px;
+        }
+        .btn-regresar:hover {
+            background-color: #5a6268;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.13/jspdf.plugin.autotable.min.js"></script>
+</head>
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div></div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="sidebar">
+            <button class="btn btn-regresar" onclick="window.location.href='pantalla1.html'">← Regresar</button>
+        </div>
+
+        <div class="main-content">
+            <h1>Generar Reportes</h1>
+            <form id="reporteForm">
+                <div class="form-group">
+                    <label>Fecha de Inicio:</label>
+                    <input type="date" class="form-control" id="fechaInicio" required>
+                </div>
+                <div class="form-group">
+                    <label>Fecha de Fin:</label>
+                    <input type="date" class="form-control" id="fechaFin" required>
+                </div>
+                <div class="form-group">
+                    <label>Raza:</label>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="rex" value="Rex">
+                        <label class="form-check-label" for="rex">Rex</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="danes" value="Danés">
+                        <label class="form-check-label" for="danes">Danés</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="leon" value="León">
+                        <label class="form-check-label" for="leon">León</label>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-secondary" onclick="generarReporteAlimentacion()">Reporte de Alimentación</button>
+                <button type="button" class="btn btn-secondary" onclick="generarReporteVacunacion()">Reporte de Vacunación</button>
+                <button type="button" class="btn btn-secondary" onclick="generarReporteDesparacitacion()">Reporte de Desparacitación</button>
+            </form>
+
+            <div id="mensajeExito" class="alert alert-success mt-3" style="display:none;"></div>
+
+            <div id="vistaReporte" class="mt-4" style="display:none; text-align: center;">
+                <h3>Reporte de Alimentación de Conejos</h3>
+                <p>Nombre de Empresa: [Nombre de la Empresa]</p>
+                <p>Rango de Fechas: <span id="rangoFechas"></span></p>
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Código</th>
+                            <th>Edad (meses)</th>
+                            <th>Peso (kg)</th>
+                            <th>Fecha y Hora</th>
+                            <th>Heno Seco (g)</th>
+                            <th>Hierba Húmeda (g)</th>
+                            <th>Balanceado (g)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="datosReporte">
+                        <!-- Datos del reporte serán cargados aquí -->
+                    </tbody>
+                </table>
+                <button class="btn btn-success" onclick="descargarPDF()">Descargar PDF</button>
+            </div>
+
+            <div id="vistaReporteVacunacion" class="mt-4" style="display:none; text-align: center;">
+                <h3>Reporte de Vacunas de Conejos</h3>
+                <p>Nombre de Empresa: [Nombre de la Empresa]</p>
+                <p>Rango de Fechas: <span id="rangoFechasVacunacion"></span></p>
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Código</th>
+                            <th>Edad (meses)</th>
+                            <th>Fecha</th>
+                            <th>Vacunas Aplicadas</th>
+                        </tr>
+                    </thead>
+                    <tbody id="datosReporteVacunacion">
+                        <!-- Datos del reporte serán cargados aquí -->
+                    </tbody>
+                </table>
+                <button class="btn btn-success" onclick="descargarPDFVacunacion()">Descargar PDF</button>
+            </div>
+
+            <div id="vistaReporteDesparacitacion" class="mt-4" style="display:none; text-align: center;">
+                <h3>Reporte de Desparacitación de Conejos</h3>
+                <p>Nombre de Empresa: [Nombre de la Empresa]</p>
+                <p>Rango de Fechas: <span id="rangoFechasDesparacitacion"></span></p>
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Código</th>
+                            <th>Edad (meses)</th>
+                            <th>Fecha de desparacitación</th>
+                        </tr>
+                    </thead>
+                    <tbody id="datosReporteDesparacitacion">
+                        <!-- Datos del reporte serán cargados aquí -->
+                    </tbody>
+                </table>
+                <button class="btn btn-success" onclick="descargarPDFDesparacitacion()">Descargar PDF</button>
+            </div>
+
+            <div id="mensajeError" class="alert alert-danger mt-3" style="display:none;"></div>
+        </div>
+    </div>
+
+    <script>
+        function mostrarMensajeError(mensaje) {
+            let mensajeError = document.getElementById("mensajeError");
+            mensajeError.textContent = mensaje;
+            mensajeError.style.display = "block";
+            setTimeout(() => mensajeError.style.display = "none", 5000);
+        }
+
+        function mostrarMensajeExito(mensaje, callback) {
+            let mensajeExito = document.getElementById("mensajeExito");
+            mensajeExito.textContent = mensaje;
+            mensajeExito.style.display = "block";
+            setTimeout(() => {
+                mensajeExito.style.display = "none";
+                if (callback) callback();
+            }, 2000);
+        }
+
+        function validarFechasYrazas() {
+            let fechaInicio = document.getElementById("fechaInicio").value;
+            let fechaFin = document.getElementById("fechaFin").value;
+            let razasSeleccionadas = [
+                document.getElementById("rex").checked,
+                document.getElementById("danes").checked,
+                document.getElementById("leon").checked
+            ].filter(Boolean).length;
+
+            if (!fechaInicio || !fechaFin || razasSeleccionadas === 0) {
+                mostrarMensajeError("Debe seleccionar al menos una raza.");
+                return false;
+            }
+            if (fechaFin < fechaInicio) {
+                mostrarMensajeError("La fecha de fin no puede ser menor a la fecha de inicio.");
+                return false;
+            }
+            return true;
+        }
+
+        function resetReportViews() {
+            document.getElementById("vistaReporte").style.display = "none";
+            document.getElementById("vistaReporteVacunacion").style.display = "none";
+            document.getElementById("vistaReporteDesparacitacion").style.display = "none";
+            document.getElementById("datosReporte").innerHTML = "";
+            document.getElementById("datosReporteVacunacion").innerHTML = "";
+            document.getElementById("datosReporteDesparacitacion").innerHTML = "";
+        }
+
+        function generarReporteAlimentacion() {
+            resetReportViews();
+            if (validarFechasYrazas()) {
+                mostrarMensajeExito("Generando Reporte de Alimentación...", cargarDatosReporte);
+            }
+        }
+
+        function cargarDatosReporte() {
+            let fechaInicio = document.getElementById("fechaInicio").value;
+            let fechaFin = document.getElementById("fechaFin").value;
+            let razasSeleccionadas = [
+                document.getElementById("rex").checked ? "Rex" : null,
+                document.getElementById("danes").checked ? "Danés" : null,
+                document.getElementById("leon").checked ? "León" : null
+            ].filter(Boolean);
+
+            // Simulación de consulta a la base de datos
+            let datosReporte = [
+                { codigo: "R001", raza: "Rex", edad: "6 ", peso: "2.5", fechaHora: "2025-03-01T08:00:00Z", henoSeco: "35", hierbaHumeda: "10", afrecho: "5" },
+                { codigo: "R002", raza: "Rex", edad: "7 ", peso: "2.7", fechaHora: "2025-03-02T08:00:00Z", henoSeco: "38", hierbaHumeda: "11", afrecho: "6" },
+                { codigo: "D001", raza: "Danés", edad: "8 ", peso: "2.0", fechaHora: "2025-03-01T08:00:00Z", henoSeco: "42", hierbaHumeda: "12", afrecho: "6" },
+                { codigo: "D002", raza: "Danés", edad: "9 ", peso: "2.2", fechaHora: "2025-03-02T08:00:00Z", henoSeco: "45", hierbaHumeda: "13", afrecho: "7" },
+                { codigo: "L001", raza: "León", edad: "4 ", peso: "1.8", fechaHora: "2025-03-01T08:00:00Z", henoSeco: "25", hierbaHumeda: "7", afrecho: "3" },
+                { codigo: "L002", raza: "León", edad: "5 ", peso: "2.0", fechaHora: "2025-03-02T08:00:00Z", henoSeco: "28", hierbaHumeda: "8", afrecho: "4" }
+            ];
+
+            let datosFiltrados = datosReporte.filter(dato => {
+                let fechaDato = new Date(dato.fechaHora).toISOString().split('T')[0];
+                return razasSeleccionadas.includes(dato.raza) &&
+                       fechaDato >= fechaInicio && fechaDato <= fechaFin;
+            });
+
+            let tablaDatos = document.getElementById("datosReporte");
+            datosFiltrados.forEach(dato => {
+                let fechaHoraFormateada = new Date(dato.fechaHora).toLocaleString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+                let fila = document.createElement("tr");
+                fila.innerHTML = `
+                    <td>${dato.codigo}</td>
+                    <td>${dato.edad}</td>
+                    <td>${dato.peso}</td>
+                    <td>${fechaHoraFormateada}</td>
+                    <td>${dato.henoSeco}</td>
+                    <td>${dato.hierbaHumeda}</td>
+                    <td>${dato.afrecho}</td>
+                `;
+                tablaDatos.appendChild(fila);
+            });
+
+            document.getElementById("rangoFechas").textContent = `${fechaInicio} - ${fechaFin}`;
+            document.getElementById("vistaReporte").style.display = "block";
+        }
+
+        function descargarPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            doc.setFontSize(16);
+            doc.text("Reporte de Alimentación de Conejos", doc.internal.pageSize.getWidth() / 2, 20, { align: 'center' });
+            doc.setFontSize(12);
+            doc.text("Nombre de Empresa: [Nombre de la Empresa]", doc.internal.pageSize.getWidth() / 2, 30, { align: 'center' });
+            doc.text(`Rango de Fechas: ${document.getElementById("rangoFechas").textContent}`, doc.internal.pageSize.getWidth() / 2, 40, { align: 'center' });
+
+            const table = document.querySelector("#vistaReporte table");
+            doc.autoTable({
+                html: table,
+                startY: 50,
+                styles: { halign: 'center' }
+            });
+
+            const pdfData = doc.output('datauristring');
+            const newWindow = window.open();
+            newWindow.document.write(`<iframe width='100%' height='100%' src='${pdfData}'></iframe>`);
+        }
+
+        function generarReporteVacunacion() {
+            resetReportViews();
+            if (validarFechasYrazas()) {
+                mostrarMensajeExito("Generando Reporte de Vacunación...", cargarDatosReporteVacunacion);
+            }
+        }
+
+        function cargarDatosReporteVacunacion() {
+            let fechaInicio = document.getElementById("fechaInicio").value;
+            let fechaFin = document.getElementById("fechaFin").value;
+            let razasSeleccionadas = [
+                document.getElementById("rex").checked ? "Rex" : null,
+                document.getElementById("danes").checked ? "Danés" : null,
+                document.getElementById("leon").checked ? "León" : null
+            ].filter(Boolean);
+
+            // Simulación de consulta a la base de datos
+            let datosReporteVacunacion = [
+                { codigo: "R001", raza: "Rex", edad: "6", fecha: "2025-03-01T08:00:00Z", vacunas: ["mixomatosis", "VHD"] },
+                { codigo: "R002", raza: "Rex", edad: "7", fecha: "2025-03-02T08:00:00Z", vacunas: ["mixomatosis"] },
+                { codigo: "D001", raza: "Danés", edad: "8", fecha: "2025-03-01T08:00:00Z", vacunas: ["VHD"] },
+                { codigo: "D002", raza: "Danés", edad: "9", fecha: "2025-03-02T08:00:00Z", vacunas: ["mixomatosis", "VHD"] },
+                { codigo: "L001", raza: "León", edad: "4", fecha: "2025-03-01T08:00:00Z", vacunas: ["mixomatosis"] },
+                { codigo: "L002", raza: "León", edad: "5", fecha: "2025-03-02T08:00:00Z", vacunas: ["VHD"] }
+            ];
+
+            let datosFiltrados = datosReporteVacunacion.filter(dato => {
+                let fechaDato = new Date(dato.fecha).toISOString().split('T')[0];
+                return razasSeleccionadas.includes(dato.raza) &&
+                       fechaDato >= fechaInicio && fechaDato <= fechaFin;
+            });
+
+            let tablaDatos = document.getElementById("datosReporteVacunacion");
+            datosFiltrados.forEach(dato => {
+                let fechaFormateada = new Date(dato.fecha).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                let fila = document.createElement("tr");
+                fila.innerHTML = `
+                    <td>${dato.codigo}</td>
+                    <td>${dato.edad}</td>
+                    <td>${fechaFormateada}</td>
+                    <td>${dato.vacunas.join("<br>")}</td>
+                `;
+                tablaDatos.appendChild(fila);
+            });
+
+            document.getElementById("rangoFechasVacunacion").textContent = `${fechaInicio} - ${fechaFin}`;
+            document.getElementById("vistaReporteVacunacion").style.display = "block";
+        }
+
+        function descargarPDFVacunacion() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            doc.setFontSize(16);
+            doc.text("Reporte de Vacunas de Conejos", doc.internal.pageSize.getWidth() / 2, 20, { align: 'center' });
+            doc.setFontSize(12);
+            doc.text("Nombre de Empresa: [Nombre de la Empresa]", doc.internal.pageSize.getWidth() / 2, 30, { align: 'center' });
+            doc.text(`Rango de Fechas: ${document.getElementById("rangoFechasVacunacion").textContent}`, doc.internal.pageSize.getWidth() / 2, 40, { align: 'center' });
+
+            const table = document.querySelector("#vistaReporteVacunacion table");
+            doc.autoTable({
+                html: table,
+                startY: 50,
+                styles: { halign: 'center' }
+            });
+
+            const pdfData = doc.output('datauristring');
+            const newWindow = window.open();
+            newWindow.document.write(`<iframe width='100%' height='100%' src='${pdfData}'></iframe>`);
+        }
+
+        function generarReporteDesparacitacion() {
+            resetReportViews();
+            if (validarFechasYrazas()) {
+                mostrarMensajeExito("Generando Reporte de Desparacitación...", cargarDatosReporteDesparacitacion);
+            }
+        }
+
+        function cargarDatosReporteDesparacitacion() {
+            let fechaInicio = document.getElementById("fechaInicio").value;
+            let fechaFin = document.getElementById("fechaFin").value;
+            let razasSeleccionadas = [
+                document.getElementById("rex").checked ? "Rex" : null,
+                document.getElementById("danes").checked ? "Danés" : null,
+                document.getElementById("leon").checked ? "León" : null
+            ].filter(Boolean);
+
+            // Simulación de consulta a la base de datos
+            let datosReporteDesparacitacion = [
+                { codigo: "R001", raza: "Rex", edad: "6", fecha: "2025-03-01T08:00:00Z" },
+                { codigo: "R002", raza: "Rex", edad: "7", fecha: "2025-03-02T08:00:00Z" },
+                { codigo: "D001", raza: "Danés", edad: "8", fecha: "2025-03-01T08:00:00Z" },
+                { codigo: "D002", raza: "Danés", edad: "9", fecha: "2025-03-02T08:00:00Z" },
+                { codigo: "L001", raza: "León", edad: "4", fecha: "2025-03-01T08:00:00Z" },
+                { codigo: "L002", raza: "León", edad: "5", fecha: "2025-03-02T08:00:00Z" }
+            ];
+
+            let datosFiltrados = datosReporteDesparacitacion.filter(dato => {
+                let fechaDato = new Date(dato.fecha).toISOString().split('T')[0];
+                return razasSeleccionadas.includes(dato.raza) &&
+                       fechaDato >= fechaInicio && fechaDato <= fechaFin;
+            });
+
+            let tablaDatos = document.getElementById("datosReporteDesparacitacion");
+            datosFiltrados.forEach(dato => {
+                let fechaFormateada = new Date(dato.fecha).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                let fila = document.createElement("tr");
+                fila.innerHTML = `
+                    <td>${dato.codigo}</td>
+                    <td>${dato.edad}</td>
+                    <td>${fechaFormateada}</td>
+                `;
+                tablaDatos.appendChild(fila);
+            });
+
+            document.getElementById("rangoFechasDesparacitacion").textContent = `${fechaInicio} - ${fechaFin}`;
+            document.getElementById("vistaReporteDesparacitacion").style.display = "block";
+        }
+
+        function descargarPDFDesparacitacion() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            doc.setFontSize(16);
+            doc.text("Reporte de Desparacitación de Conejos", doc.internal.pageSize.getWidth() / 2, 20, { align: 'center' });
+            doc.setFontSize(12);
+            doc.text("Nombre de Empresa: [Nombre de la Empresa]", doc.internal.pageSize.getWidth() / 2, 30, { align: 'center' });
+            doc.text(`Rango de Fechas: ${document.getElementById("rangoFechasDesparacitacion").textContent}`, doc.internal.pageSize.getWidth() / 2, 40, { align: 'center' });
+
+            const table = document.querySelector("#vistaReporteDesparacitacion table");
+            doc.autoTable({
+                html: table,
+                startY: 50,
+                styles: { halign: 'center' }
+            });
+
+            const pdfData = doc.output('datauristring');
+            const newWindow = window.open();
+            newWindow.document.write(`<iframe width='100%' height='100%' src='${pdfData}'></iframe>`);
+        }
+    </script>
+</body>
+</html>

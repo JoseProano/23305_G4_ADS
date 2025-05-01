@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controlar Alimentación</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        .navbar {
+            background-color: #7b4e9b;
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 20px;
+        }
+        .navbar-brand, .nav-link {
+            font-size: 20px;
+            color: #fff;
+        }
+        .container-fluid {
+            display: flex;
+            min-height: 100vh;
+            padding: 0;
+        }
+        .sidebar {
+            background-color: #7b4e9b;
+            width: 250px;
+            padding: 20px;
+            border-right: 2px solid #ddd;
+        }
+        .sidebar .btn {
+            width: 100%;
+            margin-bottom: 10px;
+            background-color: #9b6fb0;
+            color: white;
+            font-size: 18px;
+            border: none;
+        }
+        .sidebar .btn:hover {
+            background-color: #7b4e9b;
+        }
+        .main-content {
+            flex-grow: 1;
+            padding: 20px;
+        }
+        .error {
+            color: red;
+            font-size: 14px;
+        }
+        .search-table {
+            margin-top: 20px;
+        }
+        .search-error {
+            color: red;
+            margin-top: 10px;
+        }
+        .list-group-item {
+            display: flex;
+            justify-content: space-between;
+        }
+        .list-group-item span {
+            flex: 1;
+            text-align: center;
+        }
+        .list-group-item span.label {
+            color: white;
+            font-weight: bold;
+        }
+        .list-group-item.header {
+            background-color: black;
+            color: white;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgb(0,0,0);
+            background-color: rgba(0,0,0,0.4);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 500px;
+            text-align: center;
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .active {
+            background-color: rgba(0, 123, 255, 0.1) !important; /* Transparent blue */
+            border-color: rgba(0, 123, 255, 0.1) !important; /* Transparent blue */
+            color: black !important; /* Ensure text color remains black */
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div></div>
+    </nav>
+    <div class="container-fluid">
+        <div class="sidebar">
+            <button class="btn btn-regresar" onclick="window.location.href='crianza.html'">← Regresar</button>
+        </div>
+        <div class="main-content">
+            <h1>Controlar Alimentación</h1>
+            <div class="form-group">
+                <label for="buscarTipo">Buscar por</label>
+                <select id="buscarTipo" class="form-control" onchange="cambiarTipoBusqueda()">
+                    <option value="codigo">Código</option>
+                    <option value="raza">Raza</option>
+                </select>
+            </div>
+            <div class="form-group" id="buscarCodigoDiv">
+                <label for="buscarCodigo">Buscar por Código</label>
+                <input type="text" id="buscarCodigo" class="form-control" oninput="buscarConejo()" placeholder="Ingrese código del conejo">
+                <small id="errorBusqueda" class="search-error"></small>
+            </div>
+            <div class="form-group" id="buscarRazaDiv" style="display: none;">
+                <label for="buscarRaza">Buscar por Raza</label>
+                <input type="text" id="buscarRaza" class="form-control" oninput="buscarConejo()" placeholder="Ingrese raza del conejo">
+                <small id="errorBusquedaRaza" class="search-error"></small>
+            </div>
+            <div class="alert alert-info" role="alert">
+                Si se suministró un valor diferente de comida, puede realizar el cambio de la dieta recomendada.
+            </div>
+            <div id="conejoList" class="list-group">
+                <div class="list-group-item header">
+                    <span class="label">Número de Jaula</span>
+                    <span class="label">Código</span>
+                    <span class="label">Edad (meses)</span> <!-- Updated header -->
+                    <span class="label">Peso (kg)</span>
+                    <span class="label">Heno Seco (g)</span> <!-- Updated header -->
+                    <span class="label">Hierba Húmeda (g)</span> <!-- Updated header -->
+                    <span class="label">Balanceado (g)</span> <!-- Updated header -->
+                </div>
+                <!-- Conejos serán cargados aquí -->
+            </div>
+            <button class="btn btn-secondary mt-2" onclick="seleccionarTodos()">Seleccionar Todos</button>
+            <button class="btn btn-primary mt-2" onclick="mostrarConfirmacion()">Registrar Alimentación</button>
+            <small class="error" id="errorConejo"></small>
+            <div id="mensajeExito" class="alert alert-success mt-3" style="display:none;"></div>
+            <div id="mensajeError" class="alert alert-danger mt-3" style="display:none;"></div>
+        </div>
+    </div>
+
+    <div id="errorModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeErrorModal()">&times;</span>
+            <p id="errorMessage"></p>
+        </div>
+    </div>
+    <div id="successModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeSuccessModal()">&times;</span>
+            <p id="successMessage"></p>
+        </div>
+    </div>
+    <div id="confirmModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeConfirmModal()">&times;</span>
+            <p>¿Está seguro de que desea registrar la alimentación de los conejos seleccionados?</p>
+            <button id="confirmRegister" class="btn btn-primary">Registrar</button>
+            <button class="btn btn-secondary" onclick="closeConfirmModal()">Cancelar</button>
+        </div>
+    </div>
+
+    <script>
+        let conejos = [
+            { jaula: 1, raza: "rex", codigo: "R001", sexo: "macho", edad: 6, peso: 2.5, proposito: "engorde" },
+            { jaula: 2, raza: "danes", codigo: "D002", sexo: "hembra", edad: 8, peso: 3.0, proposito: "reproduccion" },
+            { jaula: 3, raza: "leon", codigo: "L003", sexo: "macho", edad: 4, peso: 1.8, proposito: "engorde" }
+        ];
+
+        let alimentacion = [];
+        let registrosHoy = 0;
+
+        function cargarDatos() {
+            actualizarListaConejos();
+        }
+
+        function actualizarListaConejos() {
+            let conejoList = document.getElementById("conejoList");
+            conejoList.innerHTML = `
+                <div class="list-group-item header">
+                    <span class="label">Número de Jaula</span>
+                    <span class="label">Código</span>
+                    <span class="label">Edad (meses)</span> <!-- Updated header -->
+                    <span class="label">Peso (kg)</span>
+                    <span class="label">Heno Seco (g)</span> <!-- Updated header -->
+                    <span class="label">Hierba Húmeda (g)</span> <!-- Updated header -->
+                    <span class="label">Balanceado (g)</span> <!-- Updated header -->
+                </div>
+            `;
+
+            conejos.forEach(conejo => {
+                let peso = conejo.peso;
+                let dieta = peso * 20;
+                let henoSeco = (dieta * 0.7) / 2;
+                let hierbaHumeda = (dieta * 0.2) / 2;
+                let balanceado = (dieta * 0.1) / 2;
+
+                let item = document.createElement("div");
+                item.className = "list-group-item list-group-item-action";
+                item.innerHTML = `<span>${conejo.jaula}</span><span>${conejo.codigo}</span><span>${conejo.edad}</span> <!-- Updated data --><span>${conejo.peso}</span><span><input type="number" value="${henoSeco.toFixed(2)}" step="0.01" class="form-control"></span><span><input type="number" value="${hierbaHumeda.toFixed(2)}" step="0.01" class="form-control"></span><span><input type="number" value="${balanceado.toFixed(2)}" step="0.01" class="form-control"></span>`;
+                item.onclick = () => seleccionarConejo(conejo.codigo);
+                conejoList.appendChild(item);
+            });
+        }
+
+        function seleccionarConejo(codigo) {
+            let index = alimentacion.indexOf(codigo);
+            if (index === -1) {
+                alimentacion.push(codigo);
+            } else {
+                alimentacion.splice(index, 1);
+            }
+            let items = document.querySelectorAll("#conejoList .list-group-item");
+            items.forEach(item => item.classList.remove("active"));
+            alimentacion.forEach(codigo => {
+                let selectedItem = Array.from(items).find(item => item.textContent.includes(codigo));
+                if (selectedItem) {
+                    selectedItem.classList.add("active");
+                }
+            });
+        }
+
+        function seleccionarTodos() {
+            alimentacion = conejos.map(conejo => conejo.codigo);
+            let items = document.querySelectorAll("#conejoList .list-group-item:not(.header)"); // Exclude header row
+            items.forEach(item => item.classList.add("active"));
+        }
+
+        function mostrarConfirmacion() {
+            let mensajeError = document.getElementById("mensajeError");
+            let errorConejo = document.getElementById("errorConejo");
+
+            if (registrosHoy >= 3) {
+                alert("Ya ha registrado la alimentación 3 veces hoy. Redirigiendo a la página de crianza.");
+                window.location.href = 'crianza.html';
+                return;
+            }
+
+            if (alimentacion.length === 0) {
+                mensajeError.textContent = "Debe seleccionar al menos un conejo.";
+                mensajeError.style.display = "block";
+                return;
+            }
+
+            let porcentajeAlimentados = (alimentacion.length / conejos.length) * 100;
+            if (porcentajeAlimentados < 90) {
+                errorConejo.textContent = `Debe alimentar al menos el 90% de los conejos. Actualmente ha alimentado el ${porcentajeAlimentados.toFixed(2)}%.`;
+                errorConejo.style.display = "block";
+                return;
+            }
+
+            document.getElementById("confirmModal").style.display = "block";
+        }
+
+        document.getElementById("confirmRegister").addEventListener("click", function() {
+            let mensajeExito = document.getElementById("mensajeExito");
+            mensajeExito.textContent = "Alimentación registrada con éxito.";
+            mensajeExito.style.display = "block";
+            registrosHoy++;
+            alimentacion = [];
+            actualizarListaConejos();
+            closeConfirmModal();
+        });
+
+        function closeErrorModal() {
+            document.getElementById("errorModal").style.display = "none";
+        }
+
+        function closeSuccessModal() {
+            document.getElementById("successModal").style.display = "none";
+        }
+
+        function closeConfirmModal() {
+            document.getElementById("confirmModal").style.display = "none";
+        }
+
+        function cambiarTipoBusqueda() {
+            let tipoBusqueda = document.getElementById("buscarTipo").value;
+            if (tipoBusqueda === "codigo") {
+                document.getElementById("buscarCodigoDiv").style.display = "block";
+                document.getElementById("buscarRazaDiv").style.display = "none";
+            } else {
+                document.getElementById("buscarCodigoDiv").style.display = "none";
+                document.getElementById("buscarRazaDiv").style.display = "block";
+            }
+        }
+
+        function buscarConejo() {
+            let tipoBusqueda = document.getElementById("buscarTipo").value;
+            let errorBusqueda = document.getElementById("errorBusqueda");
+            let errorBusquedaRaza = document.getElementById("errorBusquedaRaza");
+            let conejoList = document.getElementById("conejoList");
+            conejoList.innerHTML = `
+                <div class="list-group-item header">
+                    <span class="label">Número de Jaula</span>
+                    <span class="label">Código</span>
+                    <span class="label">Edad (meses)</span> <!-- Updated header -->
+                    <span class="label">Peso (kg)</span>
+                    <span class="label">Heno Seco (g)</span> <!-- Updated header -->
+                    <span class="label">Hierba Húmeda (g)</span> <!-- Updated header -->
+                    <span class="label">Balanceado (g)</span> <!-- Updated header -->
+                </div>
+            `;
+
+            if (tipoBusqueda === "codigo") {
+                let codigo = document.getElementById("buscarCodigo").value.toLowerCase();
+                if (codigo === "") {
+                    errorBusqueda.textContent = "";
+                    actualizarListaConejos();
+                    return;
+                }
+
+                let regex = /^[rdl]\d{3}$/i;
+                if (!regex.test(codigo)) {
+                    errorBusqueda.textContent = "El formato del código es incorrecto. Debe ser la primera letra de la raza seleccionada y una numeración secuencial de 3 dígitos.";
+                    return;
+                }
+
+                let conejoEncontrado = conejos.filter(conejo => conejo.codigo.toLowerCase() === codigo);
+
+                if (conejoEncontrado.length === 0) {
+                    errorBusqueda.textContent = "No se encontró ningún conejo con ese código.";
+                    return;
+                }
+
+                errorBusqueda.textContent = ""; // Clear error message if valid input is entered
+
+                conejoEncontrado.forEach(conejo => {
+                    let peso = conejo.peso;
+                    let dieta = peso * 20;
+                    let henoSeco = (dieta * 0.7) / 2;
+                    let hierbaHumeda = (dieta * 0.2) / 2;
+                    let balanceado = (dieta * 0.1) / 2;
+
+                    let item = document.createElement("div");
+                    item.className = "list-group-item list-group-item-action";
+                    item.innerHTML = `<span>${conejo.jaula}</span><span>${conejo.codigo}</span><span>${conejo.edad}</span> <!-- Updated data --><span>${conejo.peso}</span><span><input type="number" value="${henoSeco.toFixed(2)}" step="0.01" class="form-control"></span><span><input type="number" value="${hierbaHumeda.toFixed(2)}" step="0.01" class="form-control"></span><span><input type="number" value="${balanceado.toFixed(2)}" step="0.01" class="form-control"></span>`;
+                    item.onclick = () => seleccionarConejo(conejo.codigo);
+                    conejoList.appendChild(item);
+                });
+            } else {
+                let raza = document.getElementById("buscarRaza").value.toLowerCase();
+                if (raza === "") {
+                    errorBusquedaRaza.textContent = "";
+                    actualizarListaConejos();
+                    return;
+                }
+
+                let regex = /^[a-zA-Z]+$/;
+                if (!regex.test(raza)) {
+                    errorBusquedaRaza.textContent = "El nombre de la raza solo debe contener letras.";
+                    return;
+                }
+
+                let conejoEncontrado = conejos.filter(conejo => conejo.raza.toLowerCase().includes(raza));
+
+                if (conejoEncontrado.length === 0) {
+                    errorBusquedaRaza.textContent = "No se encontró ningún conejo con esa raza.";
+                    return;
+                }
+
+                errorBusquedaRaza.textContent = ""; // Clear error message if valid input is entered
+
+                conejoEncontrado.forEach(conejo => {
+                    let peso = conejo.peso;
+                    let dieta = peso * 20;
+                    let henoSeco = (dieta * 0.7) / 2;
+                    let hierbaHumeda = (dieta * 0.2) / 2;
+                    let balanceado = (dieta * 0.1) / 2;
+
+                    let item = document.createElement("div");
+                    item.className = "list-group-item list-group-item-action";
+                    item.innerHTML = `<span>${conejo.jaula}</span><span>${conejo.codigo}</span><span>${conejo.edad}</span> <!-- Updated data --><span>${conejo.peso}</span><span><input type="number" value="${henoSeco.toFixed(2)}" step="0.01" class="form-control"></span><span><input type="number" value="${hierbaHumeda.toFixed(2)}" step="0.01" class="form-control"></span><span><input type="number" value="${balanceado.toFixed(2)}" step="0.01" class="form-control"></span>`;
+                    item.onclick = () => seleccionarConejo(conejo.codigo);
+                    conejoList.appendChild(item);
+                });
+            }
+        }
+
+        window.onload = cargarDatos;
+    </script>
+</body>
+</html>
