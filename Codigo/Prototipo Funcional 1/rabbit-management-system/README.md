@@ -49,9 +49,7 @@ rabbit-management-system
 ### Backend Setup
 1. Navigate to the `backend` directory.
 2. Create a `.env` file and add your MongoDB connection string:
-   ```
-   MONGODB_URI=mongodb+srv://JoseIP:1234@school.h9lw5.mongodb.net/Hoptolt?retryWrites=true&w=majority
-   ```
+
 3. Install dependencies:
    ```
    npm install
