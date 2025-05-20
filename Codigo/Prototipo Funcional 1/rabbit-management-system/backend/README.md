@@ -29,9 +29,7 @@ The Rabbit Management System is a full-stack application designed to manage data
    npm install
    ```
 4. Create a `.env` file in the backend directory and add your MongoDB connection string:
-   ```
-   MONGODB_URI=mongodb+srv://JoseIP:1234@school.h9lw5.mongodb.net/Hoptolt?retryWrites=true&w=majority
-   ```
+
 5. Start the server:
    ```
    npm start
